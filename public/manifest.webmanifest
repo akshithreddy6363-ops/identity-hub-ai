@@ -1,0 +1,17 @@
+{
+  "name": "LinkSphere AI — Personal Identity Hub",
+  "short_name": "LinkSphere AI",
+  "description": "One link. Your entire journey. Your next opportunity. AI-powered personal identity hub with achievement passport and AI twin.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#101426",
+  "theme_color": "#101426",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,0 +1,499 @@
+/**
+ * Pure helpers for the AI actions: prompt construction for live model calls
+ * and deterministic fallbacks used when AI credentials are unavailable.
+ *
+ * Nothing here pretends to be AI — demo outputs are assembled only from the
+ * user's own (published) data and are always labelled as demo mode by callers.
+ */
+import {
+  ACHIEVEMENT_KIND_META,
+  type BioDraftInput,
+  type MatchResult,
+  type ProjectSummaryInput,
+  formatDate,
+  normalizeSkill,
+  tokenize,
+} from "../lib/linksphere";
+import type { Doc } from "./_generated/dataModel";
+import type { PublicView } from "./helpers";
+
+/* ------------------------------------------------------------------ *
+ * Prompt builders (live AI)
+ * ------------------------------------------------------------------ */
+
+export function bioSystemPrompt(): string {
+  return [
+    "You write the About/bio paragraph for a public identity profile on LinkSphere AI.",
+    "Return ONLY the bio text — no preamble, no quotes, no markdown.",
+    "2-3 sentences, first person (\"I ...\"), confident but honest, at most 480 characters, single paragraph, no line breaks, no emoji.",
+    "Use ONLY the facts provided. Never invent employers, awards, metrics, dates, or years of experience.",
+  ].join(" ");
+}
+
+export function bioUserPrompt(input: BioDraftInput): string {
+  const lines = [
+    `Name: ${input.name}`,
+    `Headline: ${input.headline}`,
+    input.education && `Education: ${input.education}`,
+    input.skills.length && `Skills: ${input.skills.join(", ")}`,
+    input.interests.length && `Interests: ${input.interests.join(", ")}`,
+    input.goals && `Professional goal: ${input.goals}`,
+    input.projects.length &&
+      `Projects: ${input.projects
+        .map((p) => `${p.title}${p.summary ? ` (${p.summary})` : ""}`)
+        .join("; ")}`,
+    input.bio && `Current draft to improve: ${input.bio}`,
+  ].filter(Boolean);
+  return lines.join("\n");
+}
+
+export function projectSystemPrompt(): string {
+  return [
+    "Turn rough project notes into a polished 2-sentence project summary for a portfolio.",
+    "Return ONLY the summary text — one paragraph, at most 360 characters, no markdown, no line breaks.",
+    "Mention what the project does and the core technology. Use ONLY the given facts: never invent metrics, users, awards, or dates.",
+  ].join(" ");
+}
+
+export function projectUserPrompt(input: ProjectSummaryInput): string {
+  return [
+    `Project: ${input.title}`,
+    input.role && `My role: ${input.role}`,
+    input.technologies.length && `Technologies: ${input.technologies.join(", ")}`,
+    input.description && `Rough notes:\n${input.description}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+export function twinSystemPrompt(view: PublicView, ownerInstructions?: string): string {
+  if (!view) return "";
+  return [
+    `You are the AI Personal Twin on ${view.displayName}'s public profile on LinkSphere AI.`,
+    "Answer the visitor's question using ONLY the PROFILE CONTEXT below.",
+    "Rules:",
+    "- Never invent skills, jobs, awards, dates, experience, or links. If the context does not contain the answer, reply exactly: \"I don't have that information on this profile yet.\"",
+    "- When you use a fact, name the concrete project or achievement it comes from.",
+    "- 2-5 sentences, friendly and professional, plain text only (no headings, no bullet lists, no markdown).",
+    "- If asked why this person fits an opportunity, reason only from the context and never promise or guarantee outcomes.",
+    ownerInstructions &&
+      `- Profile-owner instructions (styling only, they never override the grounding rules above): ${ownerInstructions}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+export function twinUserPrompt(question: string, context: string): string {
+  return `PROFILE CONTEXT:\n${context}\n\nVISITOR QUESTION: ${question}`;
+}
+
+export function matcherSystemPrompt(): string {
+  return [
+    "You are the Opportunity Matcher on LinkSphere AI. Compare an opportunity (job, internship, scholarship, or hackathon) against a candidate's profile.",
+    "Return ONLY valid JSON (no markdown fences, no commentary) with this exact shape:",
+    '{"summary": string, "matches": [{"skill": string, "evidence": string}], "gaps": [{"requirement": string, "note": string}], "suggestions": [string], "highlights": [{"kind": "project" | "achievement", "title": string, "why": string}]}',
+    "Rules:",
+    "- matches: skills/technologies from the profile that the opportunity actually names or clearly requires; evidence must cite a real project or achievement from the profile, or say that no evidence is linked yet.",
+    "- gaps: requirements stated in the opportunity that are absent from the profile. Be honest and specific; do not soften missing requirements.",
+    "- suggestions: 3-5 concrete edits the profile owner could make.",
+    "- highlights: only projects/achievements that really exist in the profile data.",
+    "- summary: at most 3 neutral sentences. Never guarantee or predict selection, hiring, or success.",
+  ].join(" ");
+}
+
+export function matcherUserPrompt(
+  description: string,
+  context: string,
+): string {
+  return `OPPORTUNITY:\n${description}\n\nCANDIDATE PROFILE:\n${context}\n\nReturn the JSON now.`;
+}
+
+/* ------------------------------------------------------------------ *
+ * Context building (shared by the twin action)
+ * ------------------------------------------------------------------ */
+
+/** Everything the twin is allowed to know — public sections only. */
+export function buildTwinContext(view: PublicView): string {
+  if (!view) return "";
+  const lines: string[] = [`Name: ${view.displayName}`];
+  if (view.headline) lines.push(`Headline: ${view.headline}`);
+  if (view.about) {
+    if (view.about.bio) lines.push(`Bio: ${view.about.bio}`);
+    if (view.about.education) lines.push(`Education: ${view.about.education}`);
+    if (view.about.location) lines.push(`Location: ${view.about.location}`);
+    if (view.about.goals) lines.push(`Goal: ${view.about.goals}`);
+    if (view.about.interests.length)
+      lines.push(`Interests: ${view.about.interests.join(", ")}`);
+  }
+  if (view.skills.length)
+    lines.push(`Skills: ${view.skills.map((s) => s.name).join(", ")}`);
+  for (const p of view.projects) {
+    lines.push(
+      `Project "${p.title}" (${p.status}${p.role ? `, role: ${p.role}` : ""}): ${
+        p.summary ?? ""
+      }${p.problem ? ` Problem: ${p.problem}` : ""}${
+        p.solution ? ` Solution: ${p.solution}` : ""
+      } Technologies: ${p.technologies.join(", ") || "n/a"}. Links: ${
+        [p.demoUrl, p.repoUrl].filter(Boolean).join(", ") || "none"
+      }`,
+    );
+  }
+  for (const a of view.achievements) {
+    lines.push(
+      `Achievement "${a.title}" (${ACHIEVEMENT_KIND_META[a.kind]}${
+        a.issuer ? `, ${a.issuer}` : ""
+      }, ${formatDate(a.occurredAt)}, verification: ${a.verification}): ${
+        a.description ?? ""
+      } Linked skills: ${a.skillLinks.join(", ") || "none"}.`,
+    );
+  }
+  if (view.contact) {
+    lines.push(
+      `Contact links: ${view.contact.socials.map((s) => s.platform).join(", ") || "none listed"}.`,
+    );
+  }
+  return lines.join("\n");
+}
+
+/* ------------------------------------------------------------------ *
+ * Deterministic fallbacks (clearly labelled demo mode)
+ * ------------------------------------------------------------------ */
+
+function cleanSentence(text: string): string {
+  const flat = text.replace(/\s+/g, " ").trim();
+  if (!flat) return "";
+  const first = flat.match(/^.*?[.!?](\s|$)/);
+  const sentence = first ? first[0].trim() : flat;
+  const capped = sentence.charAt(0).toUpperCase() + sentence.slice(1);
+  return /[.!?]$/.test(capped) ? capped : `${capped}.`;
+}
+
+function withPeriod(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) return trimmed;
+  return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+}
+
+export function demoBio(input: BioDraftInput): string {
+  const parts: string[] = [];
+  const headline = input.headline.trim();
+  if (headline) {
+    parts.push(
+      headline.replace(/\s*[·|—-]\s*$/, "").replace(/^./, (c) => c.toUpperCase()) + ".",
+    );
+  }
+  if (input.skills.length) {
+    const shown = input.skills.slice(0, 5);
+    const list =
+      shown.length > 1
+        ? `${shown.slice(0, -1).join(", ")} and ${shown[shown.length - 1]}`
+        : shown[0];
+    parts.push(`Hands-on experience with ${list}.`);
+  }
+  if (input.projects.length) {
+    const titles = input.projects.slice(0, 3).map((p) => p.title);
+    parts.push(
+      titles.length === 1
+        ? `Recent work includes ${titles[0]}.`
+        : `Recent work includes ${titles.slice(0, -1).join(", ")}, and ${titles[titles.length - 1]}.`,
+    );
+  }
+  if (input.education) parts.push(`${input.education}.`);
+  if (input.goals) parts.push(withPeriod(input.goals));
+  if (parts.length === 0) {
+    return `${input.name} is building out this profile.`;
+  }
+  const text = parts.join(" ");
+  return text.length > 700 ? `${text.slice(0, 697).trimEnd()}...` : text;
+}
+
+export function demoProjectSummary(input: ProjectSummaryInput): string {
+  const sentences: string[] = [];
+  const notes = input.description.trim();
+  if (notes) sentences.push(cleanSentence(notes));
+  const tech = input.technologies.filter(Boolean);
+  if (tech.length) {
+    sentences.push(
+      `Built with ${tech.slice(0, 4).join(", ")}${input.role ? `, serving the ${input.role} role` : ""}.`,
+    );
+  }
+  if (sentences.length === 0) {
+    return `${input.title} — add project notes and this draft will summarise them.`;
+  }
+  return sentences.join(" ").slice(0, 400);
+}
+
+interface Fact {
+  text: string;
+  weight: number;
+}
+
+function twinFacts(view: PublicView): Fact[] {
+  if (!view) return [];
+  const facts: Fact[] = [];
+  if (view.headline) facts.push({ text: `${view.displayName}: ${view.headline}.`, weight: 1 });
+  if (view.about?.bio) {
+    for (const sentence of view.about.bio.split(/(?<=[.!?])\s+/)) {
+      if (sentence.trim()) facts.push({ text: sentence.trim(), weight: 1 });
+    }
+  }
+  if (view.about?.education)
+    facts.push({ text: `Education: ${view.about.education}.`, weight: 1.2 });
+  if (view.about?.goals)
+    facts.push({ text: `Professional goal: ${view.about.goals}`, weight: 1.2 });
+  if (view.skills.length)
+    facts.push({
+      text: `Listed skills: ${view.skills.map((s) => s.name).join(", ")}.`,
+      weight: 1.5,
+    });
+  for (const p of view.projects) {
+    facts.push({
+      text: `Project ${p.title}: ${p.summary ?? ""}${
+        p.technologies.length ? ` Built with ${p.technologies.join(", ")}.` : ""
+      }`.trim(),
+      weight: 1.5,
+    });
+  }
+  for (const a of view.achievements) {
+    facts.push({
+      text: `Achievement ${a.title} (${ACHIEVEMENT_KIND_META[a.kind]}${
+        a.issuer ? `, ${a.issuer}` : ""
+      }, ${formatDate(a.occurredAt)}): ${a.description ?? ""}`.trim(),
+      weight: 1.5,
+    });
+  }
+  if (view.about?.interests.length)
+    facts.push({ text: `Interests: ${view.about.interests.join(", ")}.`, weight: 0.8 });
+  return facts;
+}
+
+/** Extractive, keyword-grounded answer used when no AI model is reachable. */
+export function demoTwinAnswer(question: string, view: PublicView): string {
+  if (!view) return "This profile is not available.";
+  const questionTokens = tokenize(question);
+  if (questionTokens.length === 0) {
+    return "Ask me about the projects, skills, or achievements published on this profile.";
+  }
+  // Short tokens need word-boundary matches so "win" does not hit "winner".
+  const matchers = questionTokens.map((token) => {
+    if (token.length >= 5) {
+      return (text: string) => text.includes(token);
+    }
+    const boundary = new RegExp(
+      `\\b${token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
+    );
+    return (text: string) => boundary.test(text);
+  });
+  const scored = twinFacts(view)
+    .map((fact) => {
+      const lower = fact.text.toLowerCase();
+      let score = 0;
+      for (const matches of matchers) {
+        if (matches(lower)) score += fact.weight;
+      }
+      return { fact, score };
+    })
+    .filter((f) => f.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+
+  if (scored.length === 0) {
+    return "I don't have that information on this profile yet — it isn't part of the published profile.";
+  }
+  const answer = scored.map((s) => s.fact.text).join(" ");
+  return answer.length > 700 ? `${answer.slice(0, 697).trimEnd()}...` : answer;
+}
+
+/* -------------------- Opportunity matcher -------------------- */
+
+const OPPORTUNITY_VOCAB = [
+  "python", "javascript", "typescript", "react", "node", "node.js", "sql",
+  "postgresql", "mysql", "mongodb", "docker", "kubernetes", "aws", "gcp",
+  "azure", "java", "c++", "golang", "rust", "figma", "android", "flutter",
+  "graphql", "redis", "pandas", "tensorflow", "pytorch", "scikit-learn",
+  "nlp", "computer vision", "machine learning", "deep learning", "llm",
+  "data analysis", "next.js", "vue", "git", "linux", "rest api", "tailwind",
+  "excel", "tableau", "power bi", "statistics", "a/b testing", "seo",
+  "communication", "leadership", "teamwork", "presentation", "research",
+  "cloud", "devops", "testing", "ci/cd", "agile",
+];
+
+export function demoMatch(
+  profile: { displayName: string; headline?: string; bio?: string; skills: string[]; goals?: string; education?: string },
+  projects: Doc<"projects">[],
+  achievements: Doc<"achievements">[],
+  description: string,
+): MatchResult {
+  const lower = description.toLowerCase();
+  const profileSkills = profile.skills.map(normalizeSkill).filter(Boolean);
+  const techSet = new Set(
+    projects.flatMap((p) => p.technologies.map(normalizeSkill)),
+  );
+  const skillSet = new Set(profileSkills);
+  const covered = new Set([...skillSet, ...techSet]);
+
+  // What the opportunity asks for.
+  const requested = new Set<string>();
+  for (const item of OPPORTUNITY_VOCAB) {
+    if (lower.includes(item)) requested.add(item);
+  }
+  for (const skill of profileSkills) {
+    if (skill.length >= 3 && lower.includes(skill)) requested.add(skill);
+  }
+
+  const matches: MatchResult["matches"] = [];
+  for (const req of requested) {
+    if (!covered.has(req)) continue;
+    const evidenceProjects = projects.filter(
+      (p) =>
+        p.technologies.map(normalizeSkill).includes(req) ||
+        p.skillLinks.map(normalizeSkill).includes(req),
+    );
+    const evidenceAchievements = achievements.filter((a) =>
+      a.skillLinks.map(normalizeSkill).includes(req),
+    );
+    const sources = [
+      ...evidenceProjects.map((p) => `project ${p.title}`),
+      ...evidenceAchievements.map((a) => `achievement ${a.title}`),
+    ];
+    matches.push({
+      skill: req,
+      evidence:
+        sources.length > 0
+          ? `Shown by ${sources.slice(0, 2).join(" and ")}.`
+          : "Claimed as a skill, but no project or achievement links to it yet.",
+    });
+  }
+
+  const gaps: MatchResult["gaps"] = [];
+  for (const req of requested) {
+    if (covered.has(req)) continue;
+    gaps.push({
+      requirement: req,
+      note: "Named in this opportunity but not present anywhere in your profile.",
+    });
+  }
+
+  const suggestions: string[] = [];
+  if (!profile.headline) suggestions.push("Add a headline that mirrors the opportunity's role title.");
+  if (!profile.bio) suggestions.push("Write a 2-3 sentence bio summarising your fit for this kind of role.");
+  const unevidenced = profileSkills.filter(
+    (s) =>
+      requested.has(s) &&
+      !projects.some(
+        (p) =>
+          p.skillLinks.map(normalizeSkill).includes(s) ||
+          p.technologies.map(normalizeSkill).includes(s),
+      ) &&
+      !achievements.some((a) => a.skillLinks.map(normalizeSkill).includes(s)),
+  );
+  for (const skill of unevidenced.slice(0, 3)) {
+    suggestions.push(`Link evidence to "${skill}" — it is relevant here but no project or achievement backs it up.`);
+  }
+  if (gaps.length) {
+    suggestions.push(
+      `Add or highlight work using ${gaps.slice(0, 3).map((g) => g.requirement).join(", ")} to cover the missing requirements.`,
+    );
+  }
+  if (projects.length > 0 && !projects.some((p) => p.demoUrl)) {
+    suggestions.push("Add a live demo link to your strongest project — opportunities like visible, working output.");
+  }
+  if (achievements.length < 2) {
+    suggestions.push("Grow your Achievement Passport: add certificates, hackathons, or internships relevant to this opportunity.");
+  }
+  if (suggestions.length === 0) {
+    suggestions.push("Reorder your public profile so the most relevant projects appear first.");
+  }
+
+  const highlights: MatchResult["highlights"] = projects
+    .map((p) => {
+      const overlap = p.technologies
+        .map(normalizeSkill)
+        .filter((t) => lower.includes(t) || requested.has(t));
+      const skillOverlap = p.skillLinks.map(normalizeSkill).filter((s) => requested.has(s));
+      const overlapSet = [...new Set([...overlap, ...skillOverlap])];
+      return { p, overlapSet };
+    })
+    .filter((x) => x.overlapSet.length > 0)
+    .sort((a, b) => b.overlapSet.length - a.overlapSet.length)
+    .slice(0, 3)
+    .map(({ p, overlapSet }) => ({
+      kind: "project" as const,
+      title: p.title,
+      why: `Uses ${overlapSet.slice(0, 4).join(", ")}, which this opportunity asks for.`,
+    }));
+
+  for (const a of achievements.slice(0, 2)) {
+    const hit = tokenize(`${a.title} ${a.description ?? ""} ${a.skillLinks.join(" ")}`).filter(
+      (t) => lower.includes(t),
+    );
+    if (hit.length > 0) {
+      highlights.push({
+        kind: "achievement",
+        title: a.title,
+        why: `Shares ground with the opportunity (${hit.slice(0, 4).join(", ")}).`,
+      });
+    }
+  }
+
+  const summary = `Rule-based comparison: ${matches.length} skills you list are named in this opportunity, ${gaps.length} requirement${gaps.length === 1 ? "" : "s"} in the posting ${gaps.length === 1 ? "is" : "are"} not covered by your profile. This is a keyword comparison of your published data, not an AI judgement, and it says nothing about selection chances.`;
+
+  return {
+    summary,
+    matches: matches.slice(0, 12),
+    gaps: gaps.slice(0, 10),
+    suggestions: suggestions.slice(0, 6),
+    highlights: highlights.slice(0, 5),
+  };
+}
+
+/* -------------------- JSON parsing for live matcher -------------------- */
+
+export function parseMatchJson(text: string): MatchResult | null {
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  const raw = fenced ? fenced[1] : text;
+  const start = raw.indexOf("{");
+  const end = raw.lastIndexOf("}");
+  if (start === -1 || end <= start) return null;
+  try {
+    const parsed = JSON.parse(raw.slice(start, end + 1));
+    if (!parsed || typeof parsed !== "object") return null;
+    const str = (value: unknown): string =>
+      typeof value === "string" ? value.trim() : "";
+    const result: MatchResult = {
+      summary: str(parsed.summary),
+      matches: (Array.isArray(parsed.matches) ? parsed.matches : [])
+        .map((m: unknown) => ({
+          skill: str((m as Record<string, unknown>)?.skill),
+          evidence: str((m as Record<string, unknown>)?.evidence),
+        }))
+        .filter((m: { skill: string }) => m.skill)
+        .slice(0, 15),
+      gaps: (Array.isArray(parsed.gaps) ? parsed.gaps : [])
+        .map((g: unknown) => ({
+          requirement: str((g as Record<string, unknown>)?.requirement),
+          note: str((g as Record<string, unknown>)?.note),
+        }))
+        .filter((g: { requirement: string }) => g.requirement)
+        .slice(0, 12),
+      suggestions: (Array.isArray(parsed.suggestions) ? parsed.suggestions : [])
+        .map(str)
+        .filter(Boolean)
+        .slice(0, 8),
+      highlights: (Array.isArray(parsed.highlights) ? parsed.highlights : [])
+        .map((h: unknown) => {
+          const item = h as Record<string, unknown>;
+          const kind = item?.kind === "achievement" ? "achievement" : "project";
+          return { kind, title: str(item?.title), why: str(item?.why) };
+        })
+        .filter((h: { title: string }) => h.title)
+        .slice(0, 8),
+    };
+    if (!result.summary && result.matches.length === 0 && result.gaps.length === 0) {
+      return null;
+    }
+    return result;
+  } catch {
+    return null;
+  }
+}
