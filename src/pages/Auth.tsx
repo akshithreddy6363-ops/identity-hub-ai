@@ -15,8 +15,9 @@ import {
 } from "@/components/ui/input-otp";
 
 import { useAuth } from "@/hooks/use-auth";
+import { isFirebaseConfigured, signInWithGoogle } from "@/lib/firebase";
 import logo from "@/assets/logo.svg";
-import { ArrowRight, Loader2, Mail, UserX } from "lucide-react";
+import { ArrowRight, Flame, Loader2, Mail, UserX } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 
@@ -111,6 +112,32 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     }
   };
 
+  const handleFirebaseGoogle = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const idToken = await signInWithGoogle();
+      await signIn("firebase", { idToken });
+      // The effect above redirects once the Convex Auth session is live.
+    } catch (error) {
+      const code = (error as { code?: string })?.code;
+      if (
+        code === "auth/popup-closed-by-user" ||
+        code === "auth/cancelled-popup-request"
+      ) {
+        setIsLoading(false);
+        return;
+      }
+      console.error("Firebase sign-in error:", error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Firebase sign-in failed. Please try again.",
+      );
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Auth Content */}
@@ -188,6 +215,19 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                         <UserX className="mr-2 h-4 w-4" />
                         Continue as Guest
                       </Button>
+
+                      {isFirebaseConfigured && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full mt-3"
+                          onClick={handleFirebaseGoogle}
+                          disabled={isLoading}
+                        >
+                          <Flame className="mr-2 h-4 w-4" />
+                          Continue with Google
+                        </Button>
+                      )}
                     </div>
                   </CardContent>
                 </form>
