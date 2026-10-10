@@ -46,7 +46,8 @@ export const create = mutation({
     const profile = await requireMyProfile(ctx);
     const title = args.title.trim();
     if (!title) throw new Error("Project title is required.");
-    if (title.length > 100) throw new Error("Title must be 100 characters or fewer.");
+    if (title.length > 100)
+      throw new Error("Title must be 100 characters or fewer.");
     validateOptionalUrl(args.repoUrl, "Repository link");
     validateOptionalUrl(args.demoUrl, "Live demo link");
     validateOptionalUrl(args.coverUrl, "Cover image");
@@ -58,7 +59,10 @@ export const create = mutation({
       summary: args.summary?.trim() || undefined,
       problem: args.problem?.trim() || undefined,
       solution: args.solution?.trim() || undefined,
-      technologies: args.technologies.map((t) => t.trim()).filter(Boolean).slice(0, 20),
+      technologies: args.technologies
+        .map((t) => t.trim())
+        .filter(Boolean)
+        .slice(0, 20),
       repoUrl: args.repoUrl?.trim() || undefined,
       demoUrl: args.demoUrl?.trim() || undefined,
       coverUrl: args.coverUrl?.trim() || undefined,
@@ -95,7 +99,8 @@ export const update = mutation({
     await requireOwnedProfile(ctx, project.profileId);
     const title = args.title.trim();
     if (!title) throw new Error("Project title is required.");
-    if (title.length > 100) throw new Error("Title must be 100 characters or fewer.");
+    if (title.length > 100)
+      throw new Error("Title must be 100 characters or fewer.");
     validateOptionalUrl(args.repoUrl, "Repository link");
     validateOptionalUrl(args.demoUrl, "Live demo link");
     validateOptionalUrl(args.coverUrl, "Cover image");
@@ -105,7 +110,10 @@ export const update = mutation({
       summary: args.summary?.trim() || undefined,
       problem: args.problem?.trim() || undefined,
       solution: args.solution?.trim() || undefined,
-      technologies: args.technologies.map((t) => t.trim()).filter(Boolean).slice(0, 20),
+      technologies: args.technologies
+        .map((t) => t.trim())
+        .filter(Boolean)
+        .slice(0, 20),
       repoUrl: args.repoUrl?.trim() || undefined,
       demoUrl: args.demoUrl?.trim() || undefined,
       coverUrl: args.coverUrl?.trim() || undefined,

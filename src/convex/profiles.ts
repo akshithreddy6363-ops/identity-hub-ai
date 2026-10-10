@@ -150,7 +150,8 @@ export const updateProfile = mutation({
     if (args.displayName !== undefined) {
       const name = args.displayName.trim();
       if (!name) throw new Error("Name is required.");
-      if (name.length > 80) throw new Error("Name must be 80 characters or fewer.");
+      if (name.length > 80)
+        throw new Error("Name must be 80 characters or fewer.");
       patch.displayName = name;
     }
     if (args.headline !== undefined) {
@@ -177,7 +178,8 @@ export const updateProfile = mutation({
       patch.skills = skills;
     }
     if (args.socials !== undefined) {
-      for (const s of args.socials) validateOptionalUrl(s.url, `${s.platform} link`);
+      for (const s of args.socials)
+        validateOptionalUrl(s.url, `${s.platform} link`);
       patch.socials = args.socials.filter((s) => s.url.trim());
     }
     if (args.resumeUrl !== undefined) {
@@ -201,10 +203,12 @@ export const updateProfile = mutation({
     }
     if (args.teamLookingFor !== undefined) {
       const looking = args.teamLookingFor.map((s) => s.trim()).filter(Boolean);
-      if (looking.length > 20) throw new Error("Too many teammate preferences.");
+      if (looking.length > 20)
+        throw new Error("Too many teammate preferences.");
       patch.teamLookingFor = looking;
     }
-    if (args.contactPolicy !== undefined) patch.contactPolicy = args.contactPolicy;
+    if (args.contactPolicy !== undefined)
+      patch.contactPolicy = args.contactPolicy;
     if (args.resumePublic !== undefined) patch.resumePublic = args.resumePublic;
     if (args.published !== undefined) patch.published = args.published;
     if (args.visibility !== undefined) patch.visibility = args.visibility;

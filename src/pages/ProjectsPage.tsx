@@ -163,7 +163,9 @@ function ProjectDialog({
       onSaved();
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not save the project.");
+      toast.error(
+        error instanceof Error ? error.message : "Could not save the project.",
+      );
     } finally {
       setSaving(false);
     }
@@ -188,7 +190,7 @@ function ProjectDialog({
         set("summary", result.text);
         setAiMode(result.mode);
         setAiNote(result.note);
-        toast.success("Summary drafted — review before publishing");
+        toast.success("Summary drafted - review before publishing");
       } else {
         toast.error(result.error);
       }
@@ -222,7 +224,9 @@ function ProjectDialog({
               }}
               placeholder="CropSense"
             />
-            {titleError && <p className="text-xs text-destructive">{titleError}</p>}
+            {titleError && (
+              <p className="text-xs text-destructive">{titleError}</p>
+            )}
           </div>
 
           <div className="grid gap-2">
@@ -287,7 +291,7 @@ function ProjectDialog({
             <TagInput
               value={draft.technologies}
               onChange={(next) => set("technologies", next)}
-              placeholder="Python, PyTorch…"
+              placeholder="Python, PyTorch..."
             />
           </div>
 
@@ -295,7 +299,7 @@ function ProjectDialog({
             <Label>Skills this project proves</Label>
             {skills.length === 0 ? (
               <p className="rounded-lg border border-dashed bg-muted/30 px-3 py-3 text-xs text-muted-foreground">
-                Add skills to your profile first — then link them here to build
+                Add skills to your profile first - then link them here to build
                 your evidence chain.
               </p>
             ) : (
@@ -336,7 +340,7 @@ function ProjectDialog({
                 id="project-repo"
                 value={draft.repoUrl}
                 onChange={(e) => set("repoUrl", e.target.value)}
-                placeholder="https://github.com/…"
+                placeholder="https://github.com/..."
               />
             </div>
             <div className="grid gap-2">
@@ -345,7 +349,7 @@ function ProjectDialog({
                 id="project-demo"
                 value={draft.demoUrl}
                 onChange={(e) => set("demoUrl", e.target.value)}
-                placeholder="https://…"
+                placeholder="https://..."
               />
             </div>
           </div>
@@ -357,7 +361,7 @@ function ProjectDialog({
                 id="project-cover"
                 value={draft.coverUrl}
                 onChange={(e) => set("coverUrl", e.target.value)}
-                placeholder="https://…"
+                placeholder="https://..."
               />
             </div>
             <div className="grid gap-2">
@@ -465,7 +469,7 @@ export default function ProjectsPage() {
         <EmptyState
           icon={FolderGit2}
           title="No projects yet"
-          description="Add a project, draft its summary with AI, and link it to a skill — that link becomes proof on your public profile."
+          description="Add a project, draft its summary with AI, and link it to a skill - that link becomes proof on your public profile."
           action={
             <Button
               onClick={() => {
@@ -549,7 +553,9 @@ export default function ProjectsPage() {
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Delete “{project.title}”?</AlertDialogTitle>
+                        <AlertDialogTitle>
+                          Delete '{project.title}'?
+                        </AlertDialogTitle>
                         <AlertDialogDescription>
                           This removes the project and its evidence links from
                           your profile. This cannot be undone.

@@ -4,10 +4,7 @@ import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
 import { useState } from "react";
 
-/**
- * Chip-style list editor (skills, technologies, interests).
- * Enter or comma commits the current draft; duplicates are ignored.
- */
+/** Chip editor for tag lists. Enter or comma commits; duplicates are ignored. */
 export function TagInput({
   value,
   onChange,

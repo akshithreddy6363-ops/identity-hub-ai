@@ -21,7 +21,7 @@ import { useAction, useQuery } from "convex/react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-const SAMPLE_BRIEF = `AI/ML Internship — Summer 2026 (remote, 6 months)
+const SAMPLE_BRIEF = `AI/ML Internship - Summer 2026 (remote, 6 months)
 
 We are looking for a Computer Science student who can help our applied-AI team ship model-driven features. Requirements:
 - Strong Python; experience with PyTorch or TensorFlow
@@ -60,13 +60,19 @@ export default function OpportunityMatcherPage() {
         description,
       });
       if (result.ok) {
-        setAnalysis({ result: result.result, mode: result.mode, note: result.note });
+        setAnalysis({
+          result: result.result,
+          mode: result.mode,
+          note: result.note,
+        });
       } else {
         toast.error(result.error);
       }
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "The matcher is unavailable right now.",
+        error instanceof Error
+          ? error.message
+          : "The matcher is unavailable right now.",
       );
     } finally {
       setLoading(false);
@@ -93,7 +99,7 @@ export default function OpportunityMatcherPage() {
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
           Paste a job, internship, scholarship or hackathon description. You get
           matched skills with evidence, missing requirements stated honestly,
-          and what to highlight — never a promise of selection.
+          and what to highlight - never a promise of selection.
         </p>
       </header>
 
@@ -119,7 +125,7 @@ export default function OpportunityMatcherPage() {
           value={description}
           maxLength={8000}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Paste the internship, job or hackathon description here…"
+          placeholder="Paste the internship, job or hackathon description here..."
           className="leading-6"
         />
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
@@ -127,19 +133,25 @@ export default function OpportunityMatcherPage() {
             {description.length}/8000 characters · analyzed privately against
             your own profile
           </p>
-          <Button onClick={handleAnalyze} disabled={loading || !description.trim()}>
+          <Button
+            onClick={handleAnalyze}
+            disabled={loading || !description.trim()}
+          >
             {loading ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
               <Send className="size-4" />
             )}
-            {loading ? "Analyzing…" : "Analyze fit"}
+            {loading ? "Analyzing..." : "Analyze fit"}
           </Button>
         </div>
       </Panel>
 
       {loading && (
-        <Panel icon={Sparkles} title="Comparing your profile with this opportunity…">
+        <Panel
+          icon={Sparkles}
+          title="Comparing your profile with this opportunity..."
+        >
           <div className="flex flex-col gap-3">
             <div className="h-16 animate-pulse rounded-lg bg-muted" />
             <div className="h-32 animate-pulse rounded-lg bg-muted" />
@@ -171,7 +183,7 @@ export default function OpportunityMatcherPage() {
               </div>
             )}
             <p className="mt-3 text-xs text-muted-foreground">
-              Informational analysis only — LinkSphere does not guarantee
+              Informational analysis only - LinkSphere does not guarantee
               selection, interviews, or employment.
             </p>
           </Panel>
@@ -185,7 +197,7 @@ export default function OpportunityMatcherPage() {
             >
               {analysis.result.matches.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  No profile skills were named in this opportunity — consider
+                  No profile skills were named in this opportunity - consider
                   whether your positioning matches the role.
                 </p>
               ) : (
@@ -194,7 +206,9 @@ export default function OpportunityMatcherPage() {
                     key={match.skill}
                     className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3.5 py-2.5"
                   >
-                    <p className="text-sm font-medium capitalize">{match.skill}</p>
+                    <p className="text-sm font-medium capitalize">
+                      {match.skill}
+                    </p>
                     <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
                       {match.evidence}
                     </p>
@@ -206,7 +220,7 @@ export default function OpportunityMatcherPage() {
             <Panel
               icon={CircleDashed}
               title="Missing requirements"
-              description="Called out honestly — no softening"
+              description="Called out honestly - no softening"
               bodyClassName="grid gap-2.5"
             >
               {analysis.result.gaps.length === 0 ? (
@@ -220,7 +234,9 @@ export default function OpportunityMatcherPage() {
                     key={gap.requirement}
                     className="rounded-lg border border-amber-500/25 bg-amber-500/5 px-3.5 py-2.5"
                   >
-                    <p className="text-sm font-medium capitalize">{gap.requirement}</p>
+                    <p className="text-sm font-medium capitalize">
+                      {gap.requirement}
+                    </p>
                     <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
                       {gap.note}
                     </p>
@@ -271,7 +287,9 @@ export default function OpportunityMatcherPage() {
                       )}
                     </div>
                     <div>
-                      <p className={cn("text-sm font-medium")}>{highlight.title}</p>
+                      <p className={cn("text-sm font-medium")}>
+                        {highlight.title}
+                      </p>
                       <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
                         {highlight.why}
                       </p>

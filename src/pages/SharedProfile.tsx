@@ -49,7 +49,9 @@ export default function SharedProfile({ token }: { token: string }) {
             <div className="mx-auto mb-4 flex size-11 items-center justify-center rounded-full bg-muted">
               <Link2 className="size-5 text-muted-foreground" />
             </div>
-            <h1 className="text-lg font-semibold">This share link is not active</h1>
+            <h1 className="text-lg font-semibold">
+              This share link is not active
+            </h1>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               The link may have been turned off, deleted, or never existed. Ask
               the person who sent it for an updated link.
@@ -74,7 +76,10 @@ export default function SharedProfile({ token }: { token: string }) {
                   </span>
                   <p className="text-[13px] font-semibold">{shared.label}</p>
                   <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                    {SHARE_AUDIENCE_META[shared.audience as ShareAudience].label}
+                    {
+                      SHARE_AUDIENCE_META[shared.audience as ShareAudience]
+                        .label
+                    }
                   </span>
                 </div>
                 <p className="mt-2 text-xs leading-5 text-muted-foreground">
@@ -83,7 +88,9 @@ export default function SharedProfile({ token }: { token: string }) {
                     {shared.view.displayName}
                   </span>
                   &apos;s profile, prepared for a{" "}
-                  {SHARE_AUDIENCE_META[shared.audience as ShareAudience].label.toLowerCase()}
+                  {SHARE_AUDIENCE_META[
+                    shared.audience as ShareAudience
+                  ].label.toLowerCase()}
                   .
                 </p>
                 <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
@@ -108,8 +115,8 @@ export default function SharedProfile({ token }: { token: string }) {
                   )}
                 </div>
                 <p className="mt-2 text-[11px] leading-5 text-muted-foreground/80">
-                  Only the sections marked green are part of this view — the rest
-                  of the profile is not included here.
+                  Only the sections marked green are part of this view - the
+                  rest of the profile is not included here.
                 </p>
               </div>
             }

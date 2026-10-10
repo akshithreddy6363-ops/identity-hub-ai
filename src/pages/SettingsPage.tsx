@@ -118,10 +118,8 @@ function ThemePicker() {
 }
 
 /**
- * Team Finder consent controls. Everything here is opt-in and revocable: a
- * member who turns "Open to teams" off disappears from the Team Finder
- * immediately, and contact details are only ever shared with signed-in members
- * after an explicit choice.
+ * Team Finder consent controls. Opt-in and revocable: turning "Open to teams"
+ * off removes the member from Team Finder immediately.
  */
 function TeamFinderSettings({
   openToTeams,
@@ -149,7 +147,7 @@ function TeamFinderSettings({
     <Panel
       icon={UsersRound}
       title="Team Finder"
-      description="Hackathon teammate matching is opt-in — you decide what is shared."
+      description="Hackathon teammate matching is opt-in - you decide what is shared."
     >
       <div className="grid gap-1">
         <div className="flex items-center justify-between gap-4 rounded-lg px-1 py-2.5">
@@ -158,7 +156,8 @@ function TeamFinderSettings({
               Open to teams
             </Label>
             <p className="text-xs text-muted-foreground">
-              Show your published profile in other members&apos; teammate results.
+              Show your published profile in other members&apos; teammate
+              results.
             </p>
           </div>
           <Switch
@@ -204,7 +203,9 @@ function TeamFinderSettings({
                   toast.success("Availability updated");
                 } catch (error) {
                   toast.error(
-                    error instanceof Error ? error.message : "Could not update.",
+                    error instanceof Error
+                      ? error.message
+                      : "Could not update.",
                   );
                 }
               }}
@@ -218,7 +219,9 @@ function TeamFinderSettings({
         </div>
 
         <div className="mt-2 grid gap-2 rounded-lg border bg-muted/30 px-3.5 py-3">
-          <Label className="text-sm font-medium">What you are looking for</Label>
+          <Label className="text-sm font-medium">
+            What you are looking for
+          </Label>
           <TagInput
             value={draftLookingFor}
             onChange={setDraftLookingFor}
@@ -243,7 +246,9 @@ function TeamFinderSettings({
                   toast.success("Teammate preferences updated");
                 } catch (error) {
                   toast.error(
-                    error instanceof Error ? error.message : "Could not update.",
+                    error instanceof Error
+                      ? error.message
+                      : "Could not update.",
                   );
                 } finally {
                   setSavingNeeds(false);
@@ -342,7 +347,9 @@ export default function SettingsPage() {
           : `"${SECTION_ROWS.find((r) => r.key === key)?.label}" is now hidden`,
       );
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not update visibility.");
+      toast.error(
+        error instanceof Error ? error.message : "Could not update visibility.",
+      );
     }
   };
 
@@ -354,7 +361,7 @@ export default function SettingsPage() {
           Settings & privacy
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Private dashboard data never leaves your account — only what you mark
+          Private dashboard data never leaves your account - only what you mark
           public here appears on your profile URL.
         </p>
       </header>
@@ -369,7 +376,11 @@ export default function SettingsPage() {
             await updateProfile(patch);
           }}
         />
-        <Panel icon={Eye} title="Public sections" description="Choose exactly what visitors see.">
+        <Panel
+          icon={Eye}
+          title="Public sections"
+          description="Choose exactly what visitors see."
+        >
           <div className="grid gap-1">
             {SECTION_ROWS.map((row) => (
               <div
@@ -377,7 +388,10 @@ export default function SettingsPage() {
                 className="flex items-center justify-between gap-4 rounded-lg px-1 py-2.5"
               >
                 <div>
-                  <Label htmlFor={`vis-${row.key}`} className="text-sm font-medium">
+                  <Label
+                    htmlFor={`vis-${row.key}`}
+                    className="text-sm font-medium"
+                  >
                     {row.label}
                   </Label>
                   <p className="text-xs text-muted-foreground">{row.note}</p>
@@ -405,11 +419,15 @@ export default function SettingsPage() {
                   try {
                     await updateProfile({ resumePublic: checked });
                     toast.success(
-                      checked ? "Resume link is public" : "Resume link is private",
+                      checked
+                        ? "Resume link is public"
+                        : "Resume link is private",
                     );
                   } catch (error) {
                     toast.error(
-                      error instanceof Error ? error.message : "Could not update.",
+                      error instanceof Error
+                        ? error.message
+                        : "Could not update.",
                     );
                   }
                 }}
@@ -430,10 +448,14 @@ export default function SettingsPage() {
                 onCheckedChange={async (checked) => {
                   try {
                     await updateProfile({ published: checked });
-                    toast.success(checked ? "Profile published" : "Profile unpublished");
+                    toast.success(
+                      checked ? "Profile published" : "Profile unpublished",
+                    );
                   } catch (error) {
                     toast.error(
-                      error instanceof Error ? error.message : "Could not update.",
+                      error instanceof Error
+                        ? error.message
+                        : "Could not update.",
                     );
                   }
                 }}
@@ -443,15 +465,25 @@ export default function SettingsPage() {
         </Panel>
 
         <div className="flex flex-col gap-6">
-          <Panel icon={Link2} title="Your public link" description="Permanent URL for sharing.">
+          <Panel
+            icon={Link2}
+            title="Your public link"
+            description="Permanent URL for sharing."
+          >
             <div className="flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2.5">
               <Link2 className="size-4 shrink-0 text-muted-foreground" />
-              <span className="truncate text-[13px] font-medium">{publicUrl}</span>
+              <span className="truncate text-[13px] font-medium">
+                {publicUrl}
+              </span>
               <CopyButton value={publicUrl} className="ml-auto" />
             </div>
           </Panel>
 
-          <Panel icon={ShieldCheck} title="Appearance" description="Light, dark or follow your system.">
+          <Panel
+            icon={ShieldCheck}
+            title="Appearance"
+            description="Light, dark or follow your system."
+          >
             <ThemePicker />
           </Panel>
 

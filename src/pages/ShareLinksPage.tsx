@@ -34,10 +34,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
-import {
-  SHARE_AUDIENCE_META,
-  type ShareAudience,
-} from "@/lib/linksphere";
+import { SHARE_AUDIENCE_META, type ShareAudience } from "@/lib/linksphere";
 import { cn } from "@/lib/utils";
 import {
   Award,
@@ -72,24 +69,82 @@ const SECTION_META: {
   description: string;
   icon: typeof Award;
 }[] = [
-  { key: "about", label: "About", description: "Bio, education, goals and interests.", icon: UserRound },
-  { key: "skills", label: "Skills", description: "Skills with linked evidence.", icon: Waypoints },
-  { key: "projects", label: "Projects", description: "Published projects and their stack.", icon: FolderGit2 },
-  { key: "achievements", label: "Achievement passport", description: "Awards, certificates and internships.", icon: Award },
-  { key: "challenges", label: "Proof-of-Skill challenges", description: "Challenges, submissions and outcomes.", icon: Swords },
-  { key: "contact", label: "Contact & links", description: "Social links and public resume.", icon: Link2 },
+  {
+    key: "about",
+    label: "About",
+    description: "Bio, education, goals and interests.",
+    icon: UserRound,
+  },
+  {
+    key: "skills",
+    label: "Skills",
+    description: "Skills with linked evidence.",
+    icon: Waypoints,
+  },
+  {
+    key: "projects",
+    label: "Projects",
+    description: "Published projects and their stack.",
+    icon: FolderGit2,
+  },
+  {
+    key: "achievements",
+    label: "Achievement passport",
+    description: "Awards, certificates and internships.",
+    icon: Award,
+  },
+  {
+    key: "challenges",
+    label: "Proof-of-Skill challenges",
+    description: "Challenges, submissions and outcomes.",
+    icon: Swords,
+  },
+  {
+    key: "contact",
+    label: "Contact & links",
+    description: "Social links and public resume.",
+    icon: Link2,
+  },
 ];
 
 function presetSections(audience: ShareAudience): Sections {
   switch (audience) {
     case "recruiter":
-      return { about: true, skills: true, projects: true, achievements: true, challenges: true, contact: false };
+      return {
+        about: true,
+        skills: true,
+        projects: true,
+        achievements: true,
+        challenges: true,
+        contact: false,
+      };
     case "mentor":
-      return { about: true, skills: true, projects: true, achievements: false, challenges: false, contact: false };
+      return {
+        about: true,
+        skills: true,
+        projects: true,
+        achievements: false,
+        challenges: false,
+        contact: false,
+      };
     case "collaborator":
-      return { about: false, skills: true, projects: true, achievements: false, challenges: true, contact: true };
+      return {
+        about: false,
+        skills: true,
+        projects: true,
+        achievements: false,
+        challenges: true,
+        contact: true,
+      };
     default:
-      return { about: true, skills: true, projects: true, achievements: false, challenges: false, contact: false };
+      return {
+        about: true,
+        skills: true,
+        projects: true,
+        achievements: false,
+        challenges: false,
+        contact: false,
+      };
   }
 }
 
@@ -118,7 +173,9 @@ function ShareLinkDialog({
   const [saving, setSaving] = useState(false);
 
   const [label, setLabel] = useState(link?.label ?? "");
-  const [audience, setAudience] = useState<ShareAudience>(link?.audience ?? "recruiter");
+  const [audience, setAudience] = useState<ShareAudience>(
+    link?.audience ?? "recruiter",
+  );
   const [sections, setSections] = useState<Sections>(
     link?.sections ?? presetSections("recruiter"),
   );
@@ -149,7 +206,9 @@ function ShareLinkDialog({
       onOpenChange(false);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Could not save the share link.",
+        error instanceof Error
+          ? error.message
+          : "Could not save the share link.",
       );
     } finally {
       setSaving(false);
@@ -160,10 +219,12 @@ function ShareLinkDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{link ? "Edit share link" : "New share link"}</DialogTitle>
+          <DialogTitle>
+            {link ? "Edit share link" : "New share link"}
+          </DialogTitle>
           <DialogDescription>
-            Choose who it's for and which sections they see. A link can only ever
-            show what your public profile already shows.
+            Choose who it's for and which sections they see. A link can only
+            ever show what your public profile already shows.
           </DialogDescription>
         </DialogHeader>
 
@@ -175,7 +236,7 @@ function ShareLinkDialog({
               value={label}
               maxLength={60}
               onChange={(e) => setLabel(e.target.value)}
-              placeholder="Recruiter — backend roles"
+              placeholder="Recruiter - backend roles"
             />
           </div>
 
@@ -189,11 +250,13 @@ function ShareLinkDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(Object.keys(SHARE_AUDIENCE_META) as ShareAudience[]).map((key) => (
-                  <SelectItem key={key} value={key}>
-                    {SHARE_AUDIENCE_META[key].label}
-                  </SelectItem>
-                ))}
+                {(Object.keys(SHARE_AUDIENCE_META) as ShareAudience[]).map(
+                  (key) => (
+                    <SelectItem key={key} value={key}>
+                      {SHARE_AUDIENCE_META[key].label}
+                    </SelectItem>
+                  ),
+                )}
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
@@ -223,7 +286,7 @@ function ShareLinkDialog({
                       <p className="text-sm font-medium">{section.label}</p>
                       <p className="text-xs text-muted-foreground">
                         {hiddenOnPublic
-                          ? "Hidden on your public profile — cannot be shared."
+                          ? "Hidden on your public profile - cannot be shared."
                           : section.description}
                       </p>
                     </div>
@@ -231,7 +294,10 @@ function ShareLinkDialog({
                       checked={active && !hiddenOnPublic}
                       disabled={hiddenOnPublic}
                       onCheckedChange={(checked) =>
-                        setSections((prev) => ({ ...prev, [section.key]: checked }))
+                        setSections((prev) => ({
+                          ...prev,
+                          [section.key]: checked,
+                        }))
                       }
                     />
                   </div>
@@ -284,14 +350,17 @@ export default function ShareLinksPage() {
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-muted-foreground">Intelligence</p>
+          <p className="text-sm font-medium text-muted-foreground">
+            Intelligence
+          </p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
             Smart Share Profiles
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
             One profile, several tailored views. Send a recruiter your projects
             and achievements, a mentor your goals and current work, a
-            collaborator your stack and contact links — without exposing the rest.
+            collaborator your stack and contact links - without exposing the
+            rest.
           </p>
         </div>
         <Button
@@ -345,7 +414,9 @@ export default function ShareLinksPage() {
       ) : (
         <div className="grid gap-3">
           {links.map((link) => {
-            const sharedCount = Object.values(link.sections).filter(Boolean).length;
+            const sharedCount = Object.values(link.sections).filter(
+              Boolean,
+            ).length;
             const url = `${origin}/s/${link.token}`;
             return (
               <div
@@ -375,41 +446,48 @@ export default function ShareLinksPage() {
                       {SHARE_AUDIENCE_META[link.audience].note}
                     </p>
                     <div className="mt-2.5 flex flex-wrap gap-1.5">
-                      {SECTION_META.filter((section) => link.sections[section.key]).map(
-                        (section) => (
-                          <Badge
-                            key={section.key}
-                            variant="outline"
-                            className="border-primary/30 bg-primary/10 text-primary"
-                          >
-                            {section.label}
-                          </Badge>
-                        ),
-                      )}
-                      {SECTION_META.filter((section) => !link.sections[section.key]).map(
-                        (section) => (
-                          <Badge
-                            key={section.key}
-                            variant="outline"
-                            className="text-muted-foreground/70"
-                          >
-                            <EyeOff className="size-3" />
-                            {section.label} hidden
-                          </Badge>
-                        ),
-                      )}
+                      {SECTION_META.filter(
+                        (section) => link.sections[section.key],
+                      ).map((section) => (
+                        <Badge
+                          key={section.key}
+                          variant="outline"
+                          className="border-primary/30 bg-primary/10 text-primary"
+                        >
+                          {section.label}
+                        </Badge>
+                      ))}
+                      {SECTION_META.filter(
+                        (section) => !link.sections[section.key],
+                      ).map((section) => (
+                        <Badge
+                          key={section.key}
+                          variant="outline"
+                          className="text-muted-foreground/70"
+                        >
+                          <EyeOff className="size-3" />
+                          {section.label} hidden
+                        </Badge>
+                      ))}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2">
-                      <span className="text-xs text-muted-foreground">Active</span>
+                      <span className="text-xs text-muted-foreground">
+                        Active
+                      </span>
                       <Switch
                         checked={link.isActive}
                         onCheckedChange={async (checked) => {
                           try {
-                            await updateLink({ id: link._id, isActive: checked });
+                            await updateLink({
+                              id: link._id,
+                              isActive: checked,
+                            });
                             toast.success(
-                              checked ? "Share link enabled" : "Share link turned off",
+                              checked
+                                ? "Share link enabled"
+                                : "Share link turned off",
                             );
                           } catch (error) {
                             toast.error(
@@ -445,7 +523,7 @@ export default function ShareLinksPage() {
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>
-                            Delete “{link.label}”?
+                            Delete '{link.label}'?
                           </AlertDialogTitle>
                           <AlertDialogDescription>
                             This URL will stop working immediately. Your public

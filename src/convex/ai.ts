@@ -1,17 +1,18 @@
 "use node";
 
 /**
- * AI features for LinkSphere AI.
- *
- * Every action first attempts a real model call through the VLY integration
- * (server-side only — no credentials ever reach the client). If the call
- * fails or credentials are unavailable, it falls back to a deterministic,
- * clearly-labelled "demo" answer built only from the user's own data, and the
- * UI displays that distinction.
+ * AI features. Every action tries a real model call through the VLY integration
+ * first, server-side only, so no credentials reach the client. When that fails
+ * it falls back to a deterministic answer built from the user's own data and
+ * reports mode: "demo", which the UI labels.
  */
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
-import type { InterviewResult, MatchResult, RoadmapResult } from "../lib/linksphere";
+import type {
+  InterviewResult,
+  MatchResult,
+  RoadmapResult,
+} from "../lib/linksphere";
 import { AI_NOTES } from "../lib/linksphere";
 import { vly } from "../lib/vly-integrations";
 import {
@@ -51,7 +52,7 @@ const MODEL = "gpt-4o-mini";
 
 type Completion = { text: string } | { error: string };
 
-/** Real model call, server-side. Never throws — reports failure instead. */
+/** Real model call, server-side. Reports failure instead of throwing. */
 async function complete(
   system: string,
   user: string,
@@ -75,13 +76,13 @@ async function complete(
     if (response.success && text) return { text };
     return { error: response.error || "The model returned no content." };
   } catch (error) {
-    return { error: error instanceof Error ? error.message : "AI call failed." };
+    return {
+      error: error instanceof Error ? error.message : "AI call failed.",
+    };
   }
 }
 
-/* ------------------------------------------------------------------ *
- * Bio / summary writing — the core v1 AI feature
- * ------------------------------------------------------------------ */
+// Bio and project-summary writing
 
 export const draftBio = action({
   args: {
@@ -93,20 +94,17 @@ export const draftBio = action({
       interests: v.array(v.string()),
       education: v.string(),
       goals: v.string(),
-      projects: v.array(
-        v.object({ title: v.string(), summary: v.string() }),
-      ),
+      projects: v.array(v.object({ title: v.string(), summary: v.string() })),
     }),
   },
-  handler: async (_ctx, { input }): Promise<
+  handler: async (
+    _ctx,
+    { input },
+  ): Promise<
     | { ok: true; text: string; mode: "live" | "demo"; note?: string }
     | { ok: false; error: string }
   > => {
-    const result = await complete(
-      bioSystemPrompt(),
-      bioUserPrompt(input),
-      400,
-    );
+    const result = await complete(bioSystemPrompt(), bioUserPrompt(input), 400);
     if ("text" in result) {
       return { ok: true, text: result.text, mode: "live" };
     }
@@ -124,7 +122,10 @@ export const draftProjectSummary = action({
       technologies: v.array(v.string()),
     }),
   },
-  handler: async (_ctx, { input }): Promise<
+  handler: async (
+    _ctx,
+    { input },
+  ): Promise<
     | { ok: true; text: string; mode: "live" | "demo"; note?: string }
     | { ok: false; error: string }
   > => {
@@ -145,21 +146,23 @@ export const draftProjectSummary = action({
   },
 });
 
-/* ------------------------------------------------------------------ *
- * AI Personal Twin — public visitor Q&A, grounded in published data only
- * ------------------------------------------------------------------ */
+// Personal twin: visitor Q&A over the published profile only.
 
 export const askTwin = action({
   args: {
     slug: v.string(),
     question: v.string(),
   },
-  handler: async (ctx, { slug, question }): Promise<
+  handler: async (
+    ctx,
+    { slug, question },
+  ): Promise<
     | { ok: true; answer: string; mode: "live" | "demo"; note?: string }
     | { ok: false; error: string }
   > => {
     const trimmed = question.trim();
-    if (trimmed.length < 2) return { ok: false, error: "Ask a question first." };
+    if (trimmed.length < 2)
+      return { ok: false, error: "Ask a question first." };
     if (trimmed.length > 400)
       return { ok: false, error: "Questions are limited to 400 characters." };
 
@@ -209,16 +212,17 @@ export const askTwin = action({
   },
 });
 
-/* ------------------------------------------------------------------ *
- * AI Opportunity Matcher — compare a posting against the owner's profile
- * ------------------------------------------------------------------ */
+// Opportunity matcher: score a posting against the owner's profile.
 
 export const matchOpportunity = action({
   args: {
     slug: v.string(),
     description: v.string(),
   },
-  handler: async (ctx, { slug, description }): Promise<
+  handler: async (
+    ctx,
+    { slug, description },
+  ): Promise<
     | { ok: true; result: MatchResult; mode: "live" | "demo"; note?: string }
     | { ok: false; error: string }
   > => {
@@ -229,11 +233,17 @@ export const matchOpportunity = action({
         error: "Paste at least a couple of sentences from the opportunity.",
       };
     if (trimmed.length > 8000)
-      return { ok: false, error: "Opportunity text is limited to 8,000 characters." };
+      return {
+        ok: false,
+        error: "Opportunity text is limited to 8,000 characters.",
+      };
 
     const userId = await getAuthUserId(ctx);
     if (userId === null)
-      return { ok: false, error: "Sign in to analyse opportunities against your profile." };
+      return {
+        ok: false,
+        error: "Sign in to analyse opportunities against your profile.",
+      };
 
     const bundle = await ctx.runQuery(internal.internalData.loadProfileBundle, {
       slug,
@@ -248,7 +258,8 @@ export const matchOpportunity = action({
       profile.bio && `Bio: ${profile.bio}`,
       profile.education && `Education: ${profile.education}`,
       profile.goals && `Goal: ${profile.goals}`,
-      profile.skills.length && `Skills: ${profile.skills.map((s) => s.name).join(", ")}`,
+      profile.skills.length &&
+        `Skills: ${profile.skills.map((s) => s.name).join(", ")}`,
       profile.interests.length && `Interests: ${profile.interests.join(", ")}`,
       ...projects.map(
         (p) =>
@@ -270,7 +281,7 @@ export const matchOpportunity = action({
     if ("text" in result) {
       const parsed = parseMatchJson(result.text);
       if (parsed) return { ok: true, result: parsed, mode: "live" };
-      // Malformed model output — fall through to the labelled rule-based path.
+      // Malformed model output, so use the rule-based path instead.
     }
 
     return {
@@ -294,9 +305,7 @@ export const matchOpportunity = action({
   },
 });
 
-/* ------------------------------------------------------------------ *
- * AI Interview Mode — structured, evidence-linked Q&A on a public profile
- * ------------------------------------------------------------------ */
+// Interview mode: scripted questions with evidence links.
 
 export const runInterview = action({
   args: {
@@ -307,7 +316,10 @@ export const runInterview = action({
       v.literal("student"),
     ),
   },
-  handler: async (ctx, { slug, track }): Promise<
+  handler: async (
+    ctx,
+    { slug, track },
+  ): Promise<
     | {
         ok: true;
         mode: "live" | "demo";
@@ -327,7 +339,10 @@ export const runInterview = action({
     if (!profile.published && !isOwner)
       return { ok: false, error: "This profile is not published." };
     if (!profile.twinEnabled && !isOwner)
-      return { ok: false, error: "AI features are turned off for this profile." };
+      return {
+        ok: false,
+        error: "AI features are turned off for this profile.",
+      };
 
     const view = buildPublicView(profile, projects, achievements, challenges);
     if (!view) return { ok: false, error: "This profile is not published." };
@@ -355,9 +370,7 @@ export const runInterview = action({
   },
 });
 
-/* ------------------------------------------------------------------ *
- * Personalized skills roadmap
- * ------------------------------------------------------------------ */
+// Skills roadmap.
 
 /** The owner's own data as a view, drafts included (never used for visitors). */
 async function ownViewForAi(
@@ -387,7 +400,10 @@ async function ownViewForAi(
 
 export const generateRoadmap = action({
   args: { targetRole: v.string() },
-  handler: async (ctx, { targetRole }): Promise<
+  handler: async (
+    ctx,
+    { targetRole },
+  ): Promise<
     | {
         ok: true;
         mode: "live" | "demo";
@@ -407,11 +423,17 @@ export const generateRoadmap = action({
         error: 'Enter a target role, for example "applied AI internship".',
       };
     if (role.length > 120)
-      return { ok: false, error: "Target role must be 120 characters or fewer." };
+      return {
+        ok: false,
+        error: "Target role must be 120 characters or fewer.",
+      };
 
     const view = await ownViewForAi(ctx);
     if (!view)
-      return { ok: false, error: "Create your profile first, then generate a roadmap." };
+      return {
+        ok: false,
+        error: "Create your profile first, then generate a roadmap.",
+      };
 
     const context = buildTwinContext(view);
     const result = await complete(
@@ -432,13 +454,14 @@ export const generateRoadmap = action({
   },
 });
 
-/* ------------------------------------------------------------------ *
- * Multilingual profiles
- * ------------------------------------------------------------------ */
+// Multilingual profiles.
 
 export const translateProfile = action({
   args: { locale: v.union(v.literal("te"), v.literal("hi")) },
-  handler: async (ctx, { locale }): Promise<
+  handler: async (
+    ctx,
+    { locale },
+  ): Promise<
     | {
         ok: true;
         mode: "live" | "demo";
@@ -459,7 +482,10 @@ export const translateProfile = action({
 
     const bundle = await ctx.runQuery(internal.internalData.loadMyBundle, {});
     if (!bundle)
-      return { ok: false, error: "Create your profile first, then translate it." };
+      return {
+        ok: false,
+        error: "Create your profile first, then translate it.",
+      };
     const { profile } = bundle;
 
     const fields = {

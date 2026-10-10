@@ -61,10 +61,7 @@ export const achievementKindValidator = v.union(
 );
 export type AchievementKind = Infer<typeof achievementKindValidator>;
 
-/**
- * "verified" must only ever be set after a real verification through a
- * reliable method — never automatically, never for seeded sample data.
- */
+/** Set "verified" only after a real verification, never automatically. */
 export const verificationValidator = v.union(
   v.literal("verified"),
   v.literal("pending"),
@@ -72,7 +69,7 @@ export const verificationValidator = v.union(
 );
 export type Verification = Infer<typeof verificationValidator>;
 
-/** Proof-of-Skill challenge provenance — never upgraded without real verification. */
+/** Proof-of-Skill challenge provenance - never upgraded without real verification. */
 export const challengeKindValidator = v.union(
   v.literal("coding"),
   v.literal("design"),
@@ -100,11 +97,18 @@ export const shareAudienceValidator = v.union(
 );
 export type ShareAudience = Infer<typeof shareAudienceValidator>;
 
-/** How an AI/tool result was produced — surfaced in the UI everywhere. */
-export const resultModeValidator = v.union(v.literal("live"), v.literal("demo"));
+/** How an AI/tool result was produced - surfaced in the UI everywhere. */
+export const resultModeValidator = v.union(
+  v.literal("live"),
+  v.literal("demo"),
+);
 
 const practiceValidator = v.object({
-  kind: v.union(v.literal("project"), v.literal("practice"), v.literal("course")),
+  kind: v.union(
+    v.literal("project"),
+    v.literal("practice"),
+    v.literal("course"),
+  ),
   title: v.string(),
   detail: v.string(),
 });
@@ -134,9 +138,8 @@ const schema = defineSchema(
     }).index("email", ["email"]), // index for the email. do not remove or modify
 
     /**
-     * Proof-of-Skill challenges attached to a profile. `provenance` is
-     * "platform_verified" only when the owner attached a real platform result
-     * link; the UI always states that LinkSphere has not re-verified it.
+     * Proof-of-Skill challenges. provenance is "platform_verified" only when the
+     * owner attached a platform result link, which we never re-verify.
      */
     challenges: defineTable({
       profileId: v.id("profiles"),
@@ -157,9 +160,8 @@ const schema = defineSchema(
     }).index("by_profile", ["profileId"]),
 
     /**
-     * Smart Share Profiles: a token URL with its own section visibility.
-     * Effective visibility is always the INTERSECTION with the profile's own
-     * public sections — a share link can never reveal more than the profile does.
+     * Smart Share Profiles: a token URL with its own section visibility. Effective
+     * visibility is always the intersection with the profile's public sections.
      */
     shareLinks: defineTable({
       profileId: v.id("profiles"),
@@ -201,9 +203,8 @@ const schema = defineSchema(
     }).index("by_profile", ["profileId"]),
 
     /**
-     * Living Portfolio integrations. Only public data is read (no external
-     * account credentials are ever stored); "simulated" means the sample
-     * fallback was used and is labelled as such in the UI.
+     * Living Portfolio integrations. Only public data is read and no credentials
+     * are stored; "simulated" marks the labelled sample fallback.
      */
     integrations: defineTable({
       profileId: v.id("profiles"),

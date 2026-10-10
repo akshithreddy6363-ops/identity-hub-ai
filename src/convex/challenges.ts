@@ -14,13 +14,10 @@ import {
 import { mutation, query } from "./_generated/server";
 
 /**
- * Proof-of-Skill challenges.
- *
- * Provenance rules (enforced here and stated in the UI):
- *  - "platform_verified" requires a submission URL on the challenge, because the
- *    claim rests on a real platform result link the owner attached;
- *  - LinkSphere does NOT re-verify external results, so the badge copy always
- *    says the owner confirmed it and the app did not.
+ * Proof-of-Skill challenges. "platform_verified" requires a submission URL,
+ * because the claim rests on the platform result link the owner attached. We
+ * never re-verify external results, and the UI says so wherever a challenge is
+ * shown.
  */
 
 /** All challenges on the signed-in user's profile (drafts included). */
@@ -69,11 +66,13 @@ function validateChallenge(input: {
 }) {
   const title = input.title.trim();
   if (!title) throw new Error("Challenge title is required.");
-  if (title.length > 120) throw new Error("Title must be 120 characters or fewer.");
+  if (title.length > 120)
+    throw new Error("Title must be 120 characters or fewer.");
   if (input.description && input.description.length > 1000)
     throw new Error("Description must be 1,000 characters or fewer.");
   validateOptionalUrl(input.submissionUrl, "Submission link");
-  for (const e of input.evidence) validateOptionalUrl(e.url, `Evidence "${e.label}"`);
+  for (const e of input.evidence)
+    validateOptionalUrl(e.url, `Evidence "${e.label}"`);
   if (input.provenance === "platform_verified") {
     if (!input.submissionUrl?.trim()) {
       throw new Error(

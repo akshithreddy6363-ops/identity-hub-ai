@@ -143,13 +143,15 @@ export default function RoadmapPage() {
   return (
     <div className="flex flex-col gap-6">
       <header>
-        <p className="text-sm font-medium text-muted-foreground">Intelligence</p>
+        <p className="text-sm font-medium text-muted-foreground">
+          Intelligence
+        </p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
           Personalized Skills Roadmap
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
           Pick a target role and get a milestone plan built from what you have
-          already published — with project-based practice for each step, and an
+          already published - with project-based practice for each step, and an
           honest list of what is missing today.
         </p>
       </header>
@@ -157,7 +159,7 @@ export default function RoadmapPage() {
       <Panel
         icon={Wand2}
         title="Target role"
-        description="Be specific — “applied AI internship” beats “AI”."
+        description="Be specific - 'applied AI internship' beats 'AI'."
       >
         <div className="flex flex-col gap-3">
           <div className="grid gap-2">
@@ -196,13 +198,17 @@ export default function RoadmapPage() {
             </p>
             <div className="flex items-center gap-2">
               {shown && (
-                <Button variant="outline" onClick={handleSave} disabled={saving}>
+                <Button
+                  variant="outline"
+                  onClick={handleSave}
+                  disabled={saving}
+                >
                   {saving ? (
                     <Loader2 className="size-4 animate-spin" />
                   ) : (
                     <Save className="size-4" />
                   )}
-                  {saving ? "Saving…" : "Save roadmap"}
+                  {saving ? "Saving..." : "Save roadmap"}
                 </Button>
               )}
               <Button onClick={handleGenerate} disabled={loading}>
@@ -211,7 +217,11 @@ export default function RoadmapPage() {
                 ) : (
                   <Sparkles className="size-4" />
                 )}
-                {loading ? "Planning…" : shown ? "Regenerate" : "Generate roadmap"}
+                {loading
+                  ? "Planning..."
+                  : shown
+                    ? "Regenerate"
+                    : "Generate roadmap"}
               </Button>
             </div>
           </div>
@@ -219,7 +229,7 @@ export default function RoadmapPage() {
       </Panel>
 
       {loading && (
-        <Panel icon={Sparkles} title="Building your milestones…">
+        <Panel icon={Sparkles} title="Building your milestones...">
           <div className="flex flex-col gap-3">
             <div className="h-16 animate-pulse rounded-lg bg-muted" />
             <div className="h-40 animate-pulse rounded-lg bg-muted" />
@@ -271,7 +281,7 @@ export default function RoadmapPage() {
             <Panel
               icon={CircleDashed}
               title="What is missing today"
-              description="Stated plainly — these are the gaps between your profile and the role"
+              description="Stated plainly - these are the gaps between your profile and the role"
               bodyClassName="flex flex-wrap gap-2"
             >
               {shown.result.gaps.map((gap) => (
@@ -359,7 +369,7 @@ export default function RoadmapPage() {
           </div>
 
           <p className="text-xs text-muted-foreground">
-            A plan, not a promise — LinkSphere does not guarantee interviews,
+            A plan, not a promise - LinkSphere does not guarantee interviews,
             offers or outcomes.
           </p>
         </div>

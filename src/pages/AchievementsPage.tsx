@@ -92,7 +92,7 @@ function toDateInput(ts: number): string {
   return `${d.getFullYear()}-${month}-${day}`;
 }
 
-/** Evaluated once at module load — keeps Date.now() out of the render path. */
+/** Evaluated once at module load - keeps Date.now() out of the render path. */
 const DEFAULT_DATE = toDateInput(Date.now());
 
 function AchievementDialog({
@@ -177,7 +177,9 @@ function AchievementDialog({
       onOpenChange(false);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Could not save the achievement.",
+        error instanceof Error
+          ? error.message
+          : "Could not save the achievement.",
       );
     } finally {
       setSaving(false);
@@ -209,9 +211,11 @@ function AchievementDialog({
                 set("title", e.target.value);
                 if (titleError) setTitleError(null);
               }}
-              placeholder="Winner — AgriTech track, IndiaHack 2025"
+              placeholder="Winner - AgriTech track, IndiaHack 2025"
             />
-            {titleError && <p className="text-xs text-destructive">{titleError}</p>}
+            {titleError && (
+              <p className="text-xs text-destructive">{titleError}</p>
+            )}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
@@ -273,17 +277,21 @@ function AchievementDialog({
             </div>
             <Select
               value={draft.verification}
-              onValueChange={(value) => set("verification", value as Verification)}
+              onValueChange={(value) =>
+                set("verification", value as Verification)
+              }
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(Object.keys(VERIFICATION_META) as Verification[]).map((state) => (
-                  <SelectItem key={state} value={state}>
-                    {VERIFICATION_META[state].label}
-                  </SelectItem>
-                ))}
+                {(Object.keys(VERIFICATION_META) as Verification[]).map(
+                  (state) => (
+                    <SelectItem key={state} value={state}>
+                      {VERIFICATION_META[state].label}
+                    </SelectItem>
+                  ),
+                )}
               </SelectContent>
             </Select>
             <p className="text-xs leading-5 text-muted-foreground">
@@ -316,7 +324,10 @@ function AchievementDialog({
               </p>
             )}
             {draft.evidence.map((item, index) => (
-              <div key={item.id} className="grid gap-2 sm:grid-cols-[180px_1fr]">
+              <div
+                key={item.id}
+                className="grid gap-2 sm:grid-cols-[180px_1fr]"
+              >
                 <Input
                   value={item.label}
                   placeholder="Label"
@@ -329,7 +340,7 @@ function AchievementDialog({
                 <div className="flex gap-2">
                   <Input
                     value={item.url}
-                    placeholder="https://…"
+                    placeholder="https://..."
                     onChange={(e) => {
                       const next = [...draft.evidence];
                       next[index] = { ...next[index], url: e.target.value };
@@ -439,7 +450,7 @@ export default function AchievementsPage() {
             Achievement Passport
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Hackathons, certificates, awards, internships and milestones — with
+            Hackathons, certificates, awards, internships and milestones - with
             evidence attached.
           </p>
         </div>
@@ -461,9 +472,12 @@ export default function AchievementsPage() {
         description="LinkSphere never labels anything Verified on your behalf."
         bodyClassName="text-sm leading-6 text-muted-foreground"
       >
-        Use <strong className="font-medium text-foreground">Self-reported</strong>{" "}
+        Use{" "}
+        <strong className="font-medium text-foreground">Self-reported</strong>{" "}
         for entries you state yourself,{" "}
-        <strong className="font-medium text-foreground">Verification pending</strong>{" "}
+        <strong className="font-medium text-foreground">
+          Verification pending
+        </strong>{" "}
         when evidence is attached but unchecked, and{" "}
         <strong className="font-medium text-foreground">Verified</strong> only
         after a reliable verification (issuer check, credential ID, trusted
@@ -482,7 +496,7 @@ export default function AchievementsPage() {
         <EmptyState
           icon={CirclePlus}
           title="Your passport is empty"
-          description="Add your first achievement — a hackathon, certificate or internship — with a supporting link."
+          description="Add your first achievement - a hackathon, certificate or internship - with a supporting link."
           action={
             <Button
               onClick={() => {
@@ -573,11 +587,11 @@ export default function AchievementsPage() {
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>
-                            Delete “{item.title}”?
+                            Delete '{item.title}'?
                           </AlertDialogTitle>
                           <AlertDialogDescription>
-                            The entry and its evidence links will be removed from
-                            your passport. This cannot be undone.
+                            The entry and its evidence links will be removed
+                            from your passport. This cannot be undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

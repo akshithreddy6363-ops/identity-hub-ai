@@ -13,9 +13,9 @@ import { useSyncExternalStore } from "react";
 const emptySubscribe = () => () => {};
 
 /**
- * Light / dark / system switcher. Mounted inside next-themes' ThemeProvider.
- * Uses useSyncExternalStore instead of a mount effect so the label never
- * mismatches the applied theme, without a state update inside an effect.
+ * Light / dark / system switcher. Must sit inside next-themes' ThemeProvider.
+ * useSyncExternalStore reads the applied theme without a mount effect, so the
+ * label can't drift from what is rendered.
  */
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, setTheme } = useTheme();
@@ -26,7 +26,14 @@ export function ThemeToggle({ className }: { className?: string }) {
   );
 
   if (!mounted) {
-    return <Button variant="ghost" size="icon" className={cn("size-9", className)} aria-label="Toggle theme" />;
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        className={cn("size-9", className)}
+        aria-label="Toggle theme"
+      />
+    );
   }
 
   const options = [

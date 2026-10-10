@@ -35,9 +35,7 @@ import { useMutation } from "convex/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 
-/* ------------------------------------------------------------------ */
-/* Shared bits                                                         */
-/* ------------------------------------------------------------------ */
+// Shared bits
 
 const SAMPLE_URL = `/p/${SAMPLE_SLUG}`;
 
@@ -53,7 +51,10 @@ function Section({
   return (
     <section
       id={id}
-      className={cn("mx-auto w-full max-w-6xl scroll-mt-24 px-5 sm:px-8", className)}
+      className={cn(
+        "mx-auto w-full max-w-6xl scroll-mt-24 px-5 sm:px-8",
+        className,
+      )}
     >
       {children}
     </section>
@@ -115,9 +116,7 @@ function SectionHeading({
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Header                                                              */
-/* ------------------------------------------------------------------ */
+// Header
 
 function SiteHeader() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -133,13 +132,19 @@ function SiteHeader() {
           <a href="#chain" className="transition-colors hover:text-foreground">
             Evidence chain
           </a>
-          <a href="#features" className="transition-colors hover:text-foreground">
+          <a
+            href="#features"
+            className="transition-colors hover:text-foreground"
+          >
             Features
           </a>
           <a href="#sample" className="transition-colors hover:text-foreground">
             Sample profile
           </a>
-          <a href="#advanced" className="transition-colors hover:text-foreground">
+          <a
+            href="#advanced"
+            className="transition-colors hover:text-foreground"
+          >
             Advanced
           </a>
         </nav>
@@ -152,7 +157,12 @@ function SiteHeader() {
             </Button>
           ) : (
             <>
-              <Button variant="ghost" size="sm" className="hidden sm:inline-flex" asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hidden sm:inline-flex"
+                asChild
+              >
                 <Link to="/auth">Sign in</Link>
               </Button>
               <Button size="sm" asChild>
@@ -165,10 +175,6 @@ function SiteHeader() {
     </header>
   );
 }
-
-/* ------------------------------------------------------------------ */
-/* Hero preview card                                                   */
-/* ------------------------------------------------------------------ */
 
 type PreviewTab = "profile" | "passport" | "twin";
 
@@ -239,18 +245,20 @@ function HeroPreview() {
                 </div>
               </div>
               <p className="text-[13px] leading-6 text-muted-foreground">
-                I build practical web and machine-learning tools — from
+                I build practical web and machine-learning tools - from
                 crop-disease detection to real-time transit dashboards.
               </p>
               <div className="flex flex-wrap gap-1.5">
-                {["Python", "React", "PyTorch", "FastAPI", "PostgreSQL"].map((s) => (
-                  <span
-                    key={s}
-                    className="rounded-full border bg-muted/50 px-2.5 py-1 text-[11px] font-medium"
-                  >
-                    {s}
-                  </span>
-                ))}
+                {["Python", "React", "PyTorch", "FastAPI", "PostgreSQL"].map(
+                  (s) => (
+                    <span
+                      key={s}
+                      className="rounded-full border bg-muted/50 px-2.5 py-1 text-[11px] font-medium"
+                    >
+                      {s}
+                    </span>
+                  ),
+                )}
               </div>
               <div className="grid grid-cols-3 gap-2 text-center">
                 {[
@@ -258,7 +266,10 @@ function HeroPreview() {
                   ["5", "Achievements"],
                   ["9", "Skills"],
                 ].map(([value, label]) => (
-                  <div key={label} className="rounded-lg border bg-muted/30 py-2">
+                  <div
+                    key={label}
+                    className="rounded-lg border bg-muted/30 py-2"
+                  >
                     <p className="text-sm font-semibold">{value}</p>
                     <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
                       {label}
@@ -276,7 +287,7 @@ function HeroPreview() {
               </p>
               {[
                 {
-                  title: "Winner — AgriTech track, IndiaHack 2025",
+                  title: "Winner - AgriTech track, IndiaHack 2025",
                   meta: "Hackathon · Mar 2025",
                   verification: "self_reported" as const,
                 },
@@ -296,7 +307,9 @@ function HeroPreview() {
                   className="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 px-3 py-2.5"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-[13px] font-medium">{item.title}</p>
+                    <p className="truncate text-[13px] font-medium">
+                      {item.title}
+                    </p>
                     <p className="truncate text-[11px] text-muted-foreground">
                       {item.meta}
                     </p>
@@ -305,8 +318,8 @@ function HeroPreview() {
                 </div>
               ))}
               <p className="text-[11px] leading-5 text-muted-foreground">
-                Every entry carries supporting evidence — nothing is labelled
-                “Verified” unless it actually was.
+                Every entry carries supporting evidence - nothing is labelled
+                'Verified' unless it actually was.
               </p>
             </div>
           )}
@@ -323,8 +336,8 @@ function HeroPreview() {
                 Which projects demonstrate their Python skills?
               </div>
               <div className="max-w-[92%] rounded-2xl rounded-bl-md border bg-muted/40 px-3.5 py-2.5 text-[13px] leading-5">
-                CropSense uses Python and PyTorch for crop-disease detection, and
-                their internship shipped a FastAPI reporting service.
+                CropSense uses Python and PyTorch for crop-disease detection,
+                and their internship shipped a FastAPI reporting service.
               </div>
               <div className="max-w-[92%] rounded-2xl rounded-bl-md border bg-muted/40 px-3.5 py-2.5 text-[13px] leading-5 text-muted-foreground">
                 I don&apos;t have that information on this profile yet.
@@ -349,9 +362,7 @@ function HeroPreview() {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Evidence chain                                                      */
-/* ------------------------------------------------------------------ */
+// Evidence chain
 
 const CHAIN = [
   { icon: Waypoints, label: "Skills", note: "What you claim" },
@@ -367,7 +378,7 @@ function EvidenceChain() {
       <SectionHeading
         eyebrow="The differentiator"
         title="Skills → Projects → Evidence → Achievements → Opportunities"
-        description="Most link pages stop at claims. LinkSphere connects every skill to the projects that prove it and the achievements that back it, so visitors see not just what someone knows — but how they've shown it."
+        description="Most link pages stop at claims. LinkSphere connects every skill to the projects that prove it and the achievements that back it, so visitors see not just what someone knows - but how they've shown it."
       />
       <Reveal delay={0.1} className="mt-12">
         <div className="flex flex-col items-stretch gap-3 md:flex-row md:items-center">
@@ -378,7 +389,9 @@ function EvidenceChain() {
                   <node.icon className="size-5" />
                 </div>
                 <p className="text-sm font-semibold">{node.label}</p>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">{node.note}</p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                  {node.note}
+                </p>
               </div>
               {index < CHAIN.length - 1 && (
                 <ChevronRight className="hidden size-4 shrink-0 text-muted-foreground/60 md:block" />
@@ -391,25 +404,31 @@ function EvidenceChain() {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Spotlight features                                                  */
-/* ------------------------------------------------------------------ */
+// Spotlight features
 
 const SPOTLIGHTS = [
   {
     icon: MessagesSquare,
     title: "AI Personal Twin",
     description:
-      "Visitors ask a profile questions in plain language. The twin answers only from what the owner published — and says so plainly when something isn't there.",
-    points: ["Grounded in published data only", "Never invents credentials", "Works on every public profile"],
+      "Visitors ask a profile questions in plain language. The twin answers only from what the owner published - and says so plainly when something isn't there.",
+    points: [
+      "Grounded in published data only",
+      "Never invents credentials",
+      "Works on every public profile",
+    ],
     mock: "twin" as const,
   },
   {
     icon: BadgeCheck,
     title: "Achievement Passport",
     description:
-      "Hackathons, certificates, internships, awards and milestones as a timeline — each entry with supporting links and an honest verification state.",
-    points: ["Evidence link per entry", "Self-reported vs verified", "Filter-free, no inflated claims"],
+      "Hackathons, certificates, internships, awards and milestones as a timeline - each entry with supporting links and an honest verification state.",
+    points: [
+      "Evidence link per entry",
+      "Self-reported vs verified",
+      "Filter-free, no inflated claims",
+    ],
     mock: "passport" as const,
   },
   {
@@ -417,7 +436,11 @@ const SPOTLIGHTS = [
     title: "AI Opportunity Matcher",
     description:
       "Paste a job, internship, scholarship or hackathon brief. Get matched skills with evidence, missing requirements stated honestly, and what to highlight.",
-    points: ["Real matches from your data", "Gaps called out, not hidden", "No selection guarantees"],
+    points: [
+      "Real matches from your data",
+      "Gaps called out, not hidden",
+      "No selection guarantees",
+    ],
     mock: "matcher" as const,
   },
 ];
@@ -431,7 +454,7 @@ function SpotlightMock({ kind }: { kind: "twin" | "passport" | "matcher" }) {
         </div>
         <div className="max-w-[90%] rounded-xl rounded-bl-sm border bg-muted/40 px-3 py-2 text-[12px] leading-5">
           Their CropSense project applies PyTorch in production and they hold a
-          Deep Learning certificate — both published on this profile.
+          Deep Learning certificate - both published on this profile.
         </div>
         <AIModeBadge mode="live" className="self-start" />
       </div>
@@ -446,7 +469,10 @@ function SpotlightMock({ kind }: { kind: "twin" | "passport" | "matcher" }) {
           { t: "Deep Learning Specialization", v: "pending" as const },
           { t: "SWE Intern, Finlytics", v: "self_reported" as const },
         ].map((row) => (
-          <div key={row.t} className="relative flex items-center justify-between gap-2">
+          <div
+            key={row.t}
+            className="relative flex items-center justify-between gap-2"
+          >
             <span className="absolute -left-4 top-2 size-[7px] rounded-full bg-primary" />
             <p className="truncate text-[12px] font-medium">{row.t}</p>
             <VerificationBadge verification={row.v} />
@@ -458,27 +484,38 @@ function SpotlightMock({ kind }: { kind: "twin" | "passport" | "matcher" }) {
   return (
     <div className="flex flex-col gap-2.5">
       {[
-        { ok: true, text: "Python — shown by project CropSense" },
-        { ok: true, text: "React — shown by TransitPulse" },
-        { ok: false, text: "Docker — not in your profile" },
+        { ok: true, text: "Python - shown by project CropSense" },
+        { ok: true, text: "React - shown by TransitPulse" },
+        { ok: false, text: "Docker - not in your profile" },
       ].map((row) => (
         <div
           key={row.text}
           className={cn(
             "flex items-center gap-2 rounded-lg border px-3 py-2 text-[12px]",
-            row.ok ? "border-emerald-500/25 bg-emerald-500/5" : "border-border bg-muted/30",
+            row.ok
+              ? "border-emerald-500/25 bg-emerald-500/5"
+              : "border-border bg-muted/30",
           )}
         >
           <CircleCheck
-            className={cn("size-3.5", row.ok ? "text-emerald-500" : "text-muted-foreground/50")}
+            className={cn(
+              "size-3.5",
+              row.ok ? "text-emerald-500" : "text-muted-foreground/50",
+            )}
           />
-          <span className={row.ok ? "" : "text-muted-foreground line-through decoration-border"}>
+          <span
+            className={
+              row.ok
+                ? ""
+                : "text-muted-foreground line-through decoration-border"
+            }
+          >
             {row.text}
           </span>
         </div>
       ))}
       <p className="text-[11px] text-muted-foreground">
-        Missing requirements are shown as-is — never softened.
+        Missing requirements are shown as-is - never softened.
       </p>
     </div>
   );
@@ -499,7 +536,9 @@ function SpotlightFeatures() {
               <div className="mb-4 flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <feature.icon className="size-5" />
               </div>
-              <h3 className="text-base font-semibold tracking-tight">{feature.title}</h3>
+              <h3 className="text-base font-semibold tracking-tight">
+                {feature.title}
+              </h3>
               <p className="mt-2 text-[13px] leading-6 text-muted-foreground">
                 {feature.description}
               </p>
@@ -525,15 +564,13 @@ function SpotlightFeatures() {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Advanced features                                                   */
-/* ------------------------------------------------------------------ */
+// Advanced features
 
 const ADVANCED = [
   {
     icon: MessagesSquare,
     title: "AI Interview Mode",
-    note: "Recruiter, developer or student interviews that cite the evidence behind every answer — and name what is missing.",
+    note: "Recruiter, developer or student interviews that cite the evidence behind every answer - and name what is missing.",
   },
   {
     icon: Swords,
@@ -553,7 +590,7 @@ const ADVANCED = [
   {
     icon: Languages,
     title: "Multilingual profiles",
-    note: "Publish reviewed versions in English, తెలుగు and हिन्दी — project names, technical terms and links stay exactly as written.",
+    note: "Publish reviewed versions in English, తెలుగు and हिन्दी - project names, technical terms and links stay exactly as written.",
   },
   {
     icon: Share2,
@@ -563,7 +600,7 @@ const ADVANCED = [
   {
     icon: Github,
     title: "Living portfolio integrations",
-    note: "Sync selected public GitHub repositories, choose what to import, and refresh on your terms — simulated samples are always labelled.",
+    note: "Sync selected public GitHub repositories, choose what to import, and refresh on your terms - simulated samples are always labelled.",
   },
 ];
 
@@ -582,7 +619,9 @@ function AdvancedFeatures() {
               <div className="mb-3.5 flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <item.icon className="size-5" />
               </div>
-              <p className="text-sm font-semibold tracking-tight">{item.title}</p>
+              <p className="text-sm font-semibold tracking-tight">
+                {item.title}
+              </p>
               <p className="mt-1.5 text-[13px] leading-6 text-muted-foreground">
                 {item.note}
               </p>
@@ -597,7 +636,7 @@ function AdvancedFeatures() {
               </p>
               <p className="mt-1.5 text-[13px] leading-6 text-muted-foreground">
                 Run the interview track, open a tailored recruiter view, and see
-                the labelled challenge evidence — no account needed.
+                the labelled challenge evidence - no account needed.
               </p>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -618,17 +657,39 @@ function AdvancedFeatures() {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Secondary features                                                  */
-/* ------------------------------------------------------------------ */
+// Secondary features
 
 const SECONDARY = [
-  { icon: PenLine, title: "AI bio & summary drafts", note: "Turn rough notes into a polished bio — review before publishing." },
-  { icon: FolderGit2, title: "Project showcase", note: "Problem, solution, stack, repo and live demo in one card." },
-  { icon: Waypoints, title: "Skills with evidence", note: "Click a skill to see the projects and achievements behind it." },
-  { icon: Link2, title: "One shareable URL", note: "A permanent link that keeps working as your profile evolves." },
-  { icon: ShieldCheck, title: "Privacy controls", note: "Choose which sections are public — drafts stay in your dashboard." },
-  { icon: SunMoon, title: "Light & dark, any screen", note: "Crisp, responsive and readable from phone to desktop." },
+  {
+    icon: PenLine,
+    title: "AI bio & summary drafts",
+    note: "Turn rough notes into a polished bio - review before publishing.",
+  },
+  {
+    icon: FolderGit2,
+    title: "Project showcase",
+    note: "Problem, solution, stack, repo and live demo in one card.",
+  },
+  {
+    icon: Waypoints,
+    title: "Skills with evidence",
+    note: "Click a skill to see the projects and achievements behind it.",
+  },
+  {
+    icon: Link2,
+    title: "One shareable URL",
+    note: "A permanent link that keeps working as your profile evolves.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Privacy controls",
+    note: "Choose which sections are public - drafts stay in your dashboard.",
+  },
+  {
+    icon: SunMoon,
+    title: "Light & dark, any screen",
+    note: "Crisp, responsive and readable from phone to desktop.",
+  },
 ];
 
 function SecondaryFeatures() {
@@ -657,9 +718,7 @@ function SecondaryFeatures() {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Sample preview (live iframe)                                        */
-/* ------------------------------------------------------------------ */
+// Sample preview (live iframe)
 
 function SamplePreview() {
   return (
@@ -675,7 +734,7 @@ function SamplePreview() {
           <p className="mt-4 text-[15px] leading-7 text-muted-foreground">
             Explore a complete identity hub: the Achievement Passport with
             evidence links, skills that open their proof, and an AI twin you can
-            question right on the page. Sample entries are badged — and no
+            question right on the page. Sample entries are badged - and no
             sample achievement pretends to be verified.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
@@ -714,14 +773,12 @@ function SamplePreview() {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* How it works + CTA + footer                                         */
-/* ------------------------------------------------------------------ */
+// How it works, CTA and footer
 
 const STEPS = [
   {
     title: "Build your hub",
-    note: "Name, headline, skills and links — draft the bio with AI and edit before saving.",
+    note: "Name, headline, skills and links - draft the bio with AI and edit before saving.",
   },
   {
     title: "Attach the evidence",
@@ -744,7 +801,9 @@ function HowItWorks() {
               <span className="text-xs font-semibold text-primary">
                 Step {index + 1}
               </span>
-              <p className="mt-2 text-base font-semibold tracking-tight">{step.title}</p>
+              <p className="mt-2 text-base font-semibold tracking-tight">
+                {step.title}
+              </p>
               <p className="mt-2 text-[13px] leading-6 text-muted-foreground">
                 {step.note}
               </p>
@@ -772,7 +831,7 @@ function FinalCTA() {
               One link. Your entire journey. Your next opportunity.
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-[15px] leading-7 text-muted-foreground">
-              Set up your identity hub in minutes — then let the evidence do the
+              Set up your identity hub in minutes - then let the evidence do the
               talking.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -808,7 +867,7 @@ function SiteFooter() {
           </p>
           <p className="mt-4 text-xs leading-5 text-muted-foreground/70">
             Sample content is clearly labelled. Verification states are honest
-            by design: nothing shows “Verified” unless it was verified.
+            by design: nothing shows 'Verified' unless it was verified.
           </p>
         </div>
         <div>
@@ -816,9 +875,21 @@ function SiteFooter() {
             Explore
           </p>
           <ul className="mt-3 flex flex-col gap-2 text-sm text-muted-foreground">
-            <li><a href="#features" className="hover:text-foreground">Features</a></li>
-            <li><a href="#chain" className="hover:text-foreground">Evidence chain</a></li>
-            <li><Link to={SAMPLE_URL} className="hover:text-foreground">Sample profile</Link></li>
+            <li>
+              <a href="#features" className="hover:text-foreground">
+                Features
+              </a>
+            </li>
+            <li>
+              <a href="#chain" className="hover:text-foreground">
+                Evidence chain
+              </a>
+            </li>
+            <li>
+              <Link to={SAMPLE_URL} className="hover:text-foreground">
+                Sample profile
+              </Link>
+            </li>
           </ul>
         </div>
         <div>
@@ -826,23 +897,33 @@ function SiteFooter() {
             Account
           </p>
           <ul className="mt-3 flex flex-col gap-2 text-sm text-muted-foreground">
-            <li><Link to="/auth" className="hover:text-foreground">Sign in</Link></li>
-            <li><Link to="/auth" className="hover:text-foreground">Create account</Link></li>
-            <li><Link to="/dashboard" className="hover:text-foreground">Dashboard</Link></li>
+            <li>
+              <Link to="/auth" className="hover:text-foreground">
+                Sign in
+              </Link>
+            </li>
+            <li>
+              <Link to="/auth" className="hover:text-foreground">
+                Create account
+              </Link>
+            </li>
+            <li>
+              <Link to="/dashboard" className="hover:text-foreground">
+                Dashboard
+              </Link>
+            </li>
           </ul>
         </div>
       </div>
       <div className="border-t border-border/70 py-5 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} LinkSphere AI — built for creators, students
-        and professionals.
+        © {new Date().getFullYear()} LinkSphere AI - built for creators,
+        students and professionals.
       </div>
     </footer>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Page                                                                */
-/* ------------------------------------------------------------------ */
+// Page
 
 export default function Landing() {
   const ensureSample = useMutation(api.seed.ensureSample);
@@ -852,7 +933,9 @@ export default function Landing() {
     if (started.current) return;
     started.current = true;
     // Idempotent: creates the clearly-labelled demo profile on first load.
-    ensureSample().catch((error) => console.error("Sample seed failed:", error));
+    ensureSample().catch((error) =>
+      console.error("Sample seed failed:", error),
+    );
   }, [ensureSample]);
 
   return (
@@ -903,13 +986,16 @@ export default function Landing() {
             <Reveal delay={0.2}>
               <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-muted-foreground">
                 <span className="flex items-center gap-1.5">
-                  <MessagesSquare className="size-3.5 text-primary" /> AI Personal Twin
+                  <MessagesSquare className="size-3.5 text-primary" /> AI
+                  Personal Twin
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <BadgeCheck className="size-3.5 text-primary" /> Achievement Passport
+                  <BadgeCheck className="size-3.5 text-primary" /> Achievement
+                  Passport
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <Target className="size-3.5 text-primary" /> Opportunity Matcher
+                  <Target className="size-3.5 text-primary" /> Opportunity
+                  Matcher
                 </span>
               </div>
             </Reveal>

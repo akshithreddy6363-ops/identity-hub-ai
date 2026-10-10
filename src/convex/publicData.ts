@@ -3,9 +3,9 @@ import { buildPublicView } from "./helpers";
 import { query } from "./_generated/server";
 
 /**
- * Public, unauthenticated read of a published profile. Delegates to
- * buildPublicView — the same function the AI Personal Twin uses — so the twin
- * can never surface information a visitor is not allowed to see.
+ * Unauthenticated read of a published profile. It goes through buildPublicView,
+ * the same function the twin uses, so the twin can't surface anything a visitor
+ * isn't allowed to see.
  */
 export const getPublishedProfile = query({
   args: { slug: v.string() },
@@ -16,24 +16,25 @@ export const getPublishedProfile = query({
       .first();
     if (!profile) return null;
 
-    const [projects, achievements, challenges, translations] = await Promise.all([
-      ctx.db
-        .query("projects")
-        .withIndex("by_profile", (q) => q.eq("profileId", profile._id))
-        .collect(),
-      ctx.db
-        .query("achievements")
-        .withIndex("by_profile", (q) => q.eq("profileId", profile._id))
-        .collect(),
-      ctx.db
-        .query("challenges")
-        .withIndex("by_profile", (q) => q.eq("profileId", profile._id))
-        .collect(),
-      ctx.db
-        .query("profileTranslations")
-        .withIndex("by_profile_locale", (q) => q.eq("profileId", profile._id))
-        .collect(),
-    ]);
+    const [projects, achievements, challenges, translations] =
+      await Promise.all([
+        ctx.db
+          .query("projects")
+          .withIndex("by_profile", (q) => q.eq("profileId", profile._id))
+          .collect(),
+        ctx.db
+          .query("achievements")
+          .withIndex("by_profile", (q) => q.eq("profileId", profile._id))
+          .collect(),
+        ctx.db
+          .query("challenges")
+          .withIndex("by_profile", (q) => q.eq("profileId", profile._id))
+          .collect(),
+        ctx.db
+          .query("profileTranslations")
+          .withIndex("by_profile_locale", (q) => q.eq("profileId", profile._id))
+          .collect(),
+      ]);
 
     const view = buildPublicView(profile, projects, achievements, challenges);
     if (!view) return null;

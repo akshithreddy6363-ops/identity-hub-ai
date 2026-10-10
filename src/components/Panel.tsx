@@ -2,10 +2,7 @@ import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
-/**
- * Soft layered card used to group dashboard sections: quiet header row with
- * optional icon, title, description and actions, then the body.
- */
+/** Card with an optional header row: icon, title, description and actions. */
 export function Panel({
   icon: Icon,
   title,
@@ -40,7 +37,9 @@ export function Panel({
             )}
             <div>
               {title && (
-                <h2 className="text-[15px] font-semibold tracking-tight">{title}</h2>
+                <h2 className="text-[15px] font-semibold tracking-tight">
+                  {title}
+                </h2>
               )}
               {description && (
                 <p className="mt-0.5 text-sm leading-5 text-muted-foreground">

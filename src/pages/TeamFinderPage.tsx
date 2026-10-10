@@ -28,18 +28,22 @@ export default function TeamFinderPage() {
   const [skillFilter, setSkillFilter] = useState("");
   const [submitted, setSubmitted] = useState("");
 
-  const result = useQuery(api.teamFinder.candidates, { skillFilter: submitted });
+  const result = useQuery(api.teamFinder.candidates, {
+    skillFilter: submitted,
+  });
   const loading = result === undefined;
 
   return (
     <div className="flex flex-col gap-6">
       <header>
-        <p className="text-sm font-medium text-muted-foreground">Intelligence</p>
+        <p className="text-sm font-medium text-muted-foreground">
+          Intelligence
+        </p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
           AI Team Finder
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          Find hackathon teammates whose skills complement yours — matched on
+          Find hackathon teammates whose skills complement yours - matched on
           what you are looking for, shared interests and availability.
         </p>
       </header>
@@ -53,7 +57,7 @@ export default function TeamFinderPage() {
         <p>{result?.note ?? "Rule-based matching over published profiles."}</p>
         <ul className="grid gap-1.5">
           {[
-            "Only members who switched on “Open to teams” are ever listed.",
+            "Only members who switched on 'Open to teams' are ever listed.",
             "Contact details appear only for members who chose to share them with signed-in members.",
             "Signed-out visitors cannot see this page at all.",
           ].map((line) => (
@@ -65,7 +69,8 @@ export default function TeamFinderPage() {
         </ul>
       </Panel>
 
-      {!profile ? null : !profile.openToTeams || profile.contactPolicy !== "signed_in_members" ? (
+      {!profile ? null : !profile.openToTeams ||
+        profile.contactPolicy !== "signed_in_members" ? (
         <Panel
           icon={Sparkles}
           title="Be discoverable"
@@ -115,7 +120,11 @@ export default function TeamFinderPage() {
           />
         </div>
         <Button type="submit" disabled={loading}>
-          {loading ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
+          {loading ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Search className="size-4" />
+          )}
           Search members
         </Button>
         {submitted && (
@@ -173,7 +182,7 @@ export default function TeamFinderPage() {
           title="No matching members yet"
           description={
             submitted
-              ? `Nobody opted in matches “${submitted}”. Try a broader skill or role.`
+              ? `Nobody opted in matches '${submitted}'. Try a broader skill or role.`
               : "No members have opted into team finding yet. You can still prepare your own opt-in in Settings."
           }
         />
@@ -208,7 +217,8 @@ export default function TeamFinderPage() {
                           className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                         >
                           {candidate.matchedNeeds.length} skill
-                          {candidate.matchedNeeds.length === 1 ? "" : "s"} you want
+                          {candidate.matchedNeeds.length === 1 ? "" : "s"} you
+                          want
                         </Badge>
                       )}
                       {candidate.sharedInterests.length > 0 && (
@@ -240,7 +250,11 @@ export default function TeamFinderPage() {
                   </div>
                 </div>
                 <Button size="sm" variant="outline" asChild>
-                  <a href={`/p/${candidate.slug}`} target="_blank" rel="noreferrer">
+                  <a
+                    href={`/p/${candidate.slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     View profile
                   </a>
                 </Button>
@@ -306,7 +320,7 @@ export default function TeamFinderPage() {
                 ) : (
                   <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Lock className="size-3.5" />
-                    Contact details are hidden — this member has not shared them
+                    Contact details are hidden - this member has not shared them
                     with other members.
                   </p>
                 )}

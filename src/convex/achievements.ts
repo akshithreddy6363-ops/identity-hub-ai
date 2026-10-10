@@ -6,7 +6,11 @@ import {
   validateOptionalUrl,
 } from "./helpers";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { achievementKindValidator, evidenceValidator, verificationValidator } from "./schema";
+import {
+  achievementKindValidator,
+  evidenceValidator,
+  verificationValidator,
+} from "./schema";
 import { mutation, query } from "./_generated/server";
 
 /** All achievements on the signed-in user's profile (drafts included). */
@@ -42,9 +46,12 @@ export const create = mutation({
     const profile = await requireMyProfile(ctx);
     const title = args.title.trim();
     if (!title) throw new Error("Achievement title is required.");
-    if (title.length > 120) throw new Error("Title must be 120 characters or fewer.");
-    if (!Number.isFinite(args.occurredAt)) throw new Error("A valid date is required.");
-    for (const e of args.evidence) validateOptionalUrl(e.url, `Evidence "${e.label}"`);
+    if (title.length > 120)
+      throw new Error("Title must be 120 characters or fewer.");
+    if (!Number.isFinite(args.occurredAt))
+      throw new Error("A valid date is required.");
+    for (const e of args.evidence)
+      validateOptionalUrl(e.url, `Evidence "${e.label}"`);
     if (args.verification === "verified" && args.evidence.length === 0) {
       throw new Error(
         "Verified achievements need at least one supporting evidence link.",
@@ -90,9 +97,12 @@ export const update = mutation({
     await requireOwnedProfile(ctx, achievement.profileId);
     const title = args.title.trim();
     if (!title) throw new Error("Achievement title is required.");
-    if (title.length > 120) throw new Error("Title must be 120 characters or fewer.");
-    if (!Number.isFinite(args.occurredAt)) throw new Error("A valid date is required.");
-    for (const e of args.evidence) validateOptionalUrl(e.url, `Evidence "${e.label}"`);
+    if (title.length > 120)
+      throw new Error("Title must be 120 characters or fewer.");
+    if (!Number.isFinite(args.occurredAt))
+      throw new Error("A valid date is required.");
+    for (const e of args.evidence)
+      validateOptionalUrl(e.url, `Evidence "${e.label}"`);
     if (args.verification === "verified" && args.evidence.length === 0) {
       throw new Error(
         "Verified achievements need at least one supporting evidence link.",

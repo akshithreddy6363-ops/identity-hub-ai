@@ -38,16 +38,56 @@ function useCompleteness(
   challenges: Doc<"challenges">[] | undefined,
 ) {
   const checks = [
-    { label: "Name and headline added", done: !!profile?.headline, to: "/dashboard/profile" },
-    { label: "Profile photo set", done: !!profile?.avatarUrl, to: "/dashboard/profile" },
-    { label: "Bio written", done: (profile?.bio?.length ?? 0) > 40, to: "/dashboard/profile" },
-    { label: "At least 3 skills listed", done: (profile?.skills.length ?? 0) >= 3, to: "/dashboard/profile" },
-    { label: "2+ social links", done: (profile?.socials.length ?? 0) >= 2, to: "/dashboard/profile" },
-    { label: "Education or goals added", done: !!profile?.education || !!profile?.goals, to: "/dashboard/profile" },
-    { label: "One published project", done: (projects ?? []).some((p) => p.published), to: "/dashboard/projects" },
-    { label: "One achievement added", done: (achievements ?? []).length > 0, to: "/dashboard/achievements" },
-    { label: "One proof-of-skill challenge", done: (challenges ?? []).length > 0, to: "/dashboard/challenges" },
-    { label: "Profile published", done: !!profile?.published, to: "/dashboard/profile" },
+    {
+      label: "Name and headline added",
+      done: !!profile?.headline,
+      to: "/dashboard/profile",
+    },
+    {
+      label: "Profile photo set",
+      done: !!profile?.avatarUrl,
+      to: "/dashboard/profile",
+    },
+    {
+      label: "Bio written",
+      done: (profile?.bio?.length ?? 0) > 40,
+      to: "/dashboard/profile",
+    },
+    {
+      label: "At least 3 skills listed",
+      done: (profile?.skills.length ?? 0) >= 3,
+      to: "/dashboard/profile",
+    },
+    {
+      label: "2+ social links",
+      done: (profile?.socials.length ?? 0) >= 2,
+      to: "/dashboard/profile",
+    },
+    {
+      label: "Education or goals added",
+      done: !!profile?.education || !!profile?.goals,
+      to: "/dashboard/profile",
+    },
+    {
+      label: "One published project",
+      done: (projects ?? []).some((p) => p.published),
+      to: "/dashboard/projects",
+    },
+    {
+      label: "One achievement added",
+      done: (achievements ?? []).length > 0,
+      to: "/dashboard/achievements",
+    },
+    {
+      label: "One proof-of-skill challenge",
+      done: (challenges ?? []).length > 0,
+      to: "/dashboard/challenges",
+    },
+    {
+      label: "Profile published",
+      done: !!profile?.published,
+      to: "/dashboard/profile",
+    },
   ];
   const done = checks.filter((c) => c.done).length;
   return { checks, percent: Math.round((done / checks.length) * 100) };
@@ -144,7 +184,9 @@ export default function Dashboard() {
                 <stat.icon className="size-4" />
               </div>
             </div>
-            <p className="mt-3 text-2xl font-semibold tracking-tight">{stat.value}</p>
+            <p className="mt-3 text-2xl font-semibold tracking-tight">
+              {stat.value}
+            </p>
             <p className="text-sm font-medium">{stat.label}</p>
             <p className="text-xs text-muted-foreground">{stat.hint}</p>
           </div>
@@ -158,7 +200,9 @@ export default function Dashboard() {
           title="Profile completeness"
           description={`${checks.filter((c) => c.done).length} of ${checks.length} steps done`}
           actions={
-            <span className="text-sm font-semibold text-primary">{percent}%</span>
+            <span className="text-sm font-semibold text-primary">
+              {percent}%
+            </span>
           }
         >
           <Progress value={percent} className="mb-5 h-2" />
@@ -177,7 +221,9 @@ export default function Dashboard() {
                   <CircleCheck
                     className={cn(
                       "size-4 shrink-0",
-                      check.done ? "text-emerald-500" : "text-muted-foreground/50",
+                      check.done
+                        ? "text-emerald-500"
+                        : "text-muted-foreground/50",
                     )}
                   />
                   <span className={check.done ? "" : ""}>{check.label}</span>
@@ -189,10 +235,16 @@ export default function Dashboard() {
 
         {/* Public URL + actions */}
         <div className="flex flex-col gap-6">
-          <Panel icon={Link2} title="Your public link" description="Permanent — updates never change it.">
+          <Panel
+            icon={Link2}
+            title="Your public link"
+            description="Permanent - updates never change it."
+          >
             <div className="flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2.5">
               <Link2 className="size-4 shrink-0 text-muted-foreground" />
-              <span className="truncate text-[13px] font-medium">{publicUrl}</span>
+              <span className="truncate text-[13px] font-medium">
+                {publicUrl}
+              </span>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <CopyButton value={publicUrl} />
@@ -215,18 +267,38 @@ export default function Dashboard() {
             </div>
           </Panel>
 
-          <Panel
-            icon={Target}
-            title="Quick actions"
-            bodyClassName="grid gap-2"
-          >
+          <Panel icon={Target} title="Quick actions" bodyClassName="grid gap-2">
             {[
-              { to: "/dashboard/ai", icon: Sparkles, label: "Draft my bio with AI" },
-              { to: "/dashboard/matcher", icon: Target, label: "Analyze an opportunity" },
-              { to: "/dashboard/roadmap", icon: Route, label: "Plan a skills roadmap" },
-              { to: "/dashboard/team", icon: UsersRound, label: "Find teammates" },
-              { to: "/dashboard/share", icon: Share2, label: "Create a tailored share link" },
-              { to: "/dashboard/integrations", icon: Github, label: "Sync GitHub projects" },
+              {
+                to: "/dashboard/ai",
+                icon: Sparkles,
+                label: "Draft my bio with AI",
+              },
+              {
+                to: "/dashboard/matcher",
+                icon: Target,
+                label: "Analyze an opportunity",
+              },
+              {
+                to: "/dashboard/roadmap",
+                icon: Route,
+                label: "Plan a skills roadmap",
+              },
+              {
+                to: "/dashboard/team",
+                icon: UsersRound,
+                label: "Find teammates",
+              },
+              {
+                to: "/dashboard/share",
+                icon: Share2,
+                label: "Create a tailored share link",
+              },
+              {
+                to: "/dashboard/integrations",
+                icon: Github,
+                label: "Sync GitHub projects",
+              },
               { to: "/dashboard/projects", icon: Plus, label: "Add a project" },
             ].map((action) => (
               <Link
@@ -278,7 +350,9 @@ export default function Dashboard() {
                   className="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 px-3.5 py-2.5"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{project.title}</p>
+                    <p className="truncate text-sm font-medium">
+                      {project.title}
+                    </p>
                     <p className="truncate text-xs text-muted-foreground">
                       {project.technologies.join(" · ") || "No stack listed"}
                     </p>

@@ -13,13 +13,9 @@ import type { ReactNode } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router";
 
 /**
- * Wraps a route that requires a signed-in user.
- *
- * Signed-out visitors used to be bounced straight to `/auth`, which left them
- * on a bare sign-in form with no idea which page they had asked for or why they
- * were moved. The block is now stated on the page they landed on, and sign-in
- * still returns them to it via `returnTo`. Pass `redirectImmediately` for a
- * route where the bounce really is the better experience.
+ * Route guard for signed-in pages. Signed-out visitors see the reason on the
+ * page they asked for and are sent to /auth with returnTo set, so signing in
+ * lands them back here. Pass redirectImmediately to skip the message.
  */
 export function RequireAuth({
   children,

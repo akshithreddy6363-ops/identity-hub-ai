@@ -1,7 +1,13 @@
 import { Brand, BrandMark } from "@/components/Brand";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/use-auth";
@@ -57,7 +63,13 @@ const NAV_GROUPS = [
   },
   {
     label: "Account",
-    items: [{ to: "/dashboard/settings", label: "Settings & privacy", icon: Settings }],
+    items: [
+      {
+        to: "/dashboard/settings",
+        label: "Settings & privacy",
+        icon: Settings,
+      },
+    ],
   },
 ] as const;
 
@@ -113,7 +125,12 @@ function AccountBlock({ onNavigate }: { onNavigate?: () => void }) {
           className="mb-2 w-full justify-start gap-2"
           asChild
         >
-          <a href={publicUrl} target="_blank" rel="noreferrer" onClick={onNavigate}>
+          <a
+            href={publicUrl}
+            target="_blank"
+            rel="noreferrer"
+            onClick={onNavigate}
+          >
             <ExternalLink className="size-3.5" />
             View public profile
           </a>
@@ -125,7 +142,12 @@ function AccountBlock({ onNavigate }: { onNavigate?: () => void }) {
           className="mb-2 w-full justify-start gap-2"
           asChild
         >
-          <a href={`/p/${SAMPLE_SLUG}`} target="_blank" rel="noreferrer" onClick={onNavigate}>
+          <a
+            href={`/p/${SAMPLE_SLUG}`}
+            target="_blank"
+            rel="noreferrer"
+            onClick={onNavigate}
+          >
             <ExternalLink className="size-3.5" />
             View sample profile
           </a>
@@ -136,7 +158,9 @@ function AccountBlock({ onNavigate }: { onNavigate?: () => void }) {
           {initials(user?.name || user?.email || "?")}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-xs font-medium">{user?.name || "Signed in"}</p>
+          <p className="truncate text-xs font-medium">
+            {user?.name || "Signed in"}
+          </p>
           <p className="truncate text-[11px] text-muted-foreground">
             {user?.email || "Local account"}
           </p>
@@ -204,11 +228,19 @@ export default function AppShell() {
           <ThemeToggle />
           <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-9" aria-label="Open menu">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-9"
+                aria-label="Open menu"
+              >
                 <Menu className="size-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="flex w-72 flex-col bg-sidebar p-0">
+            <SheetContent
+              side="left"
+              className="flex w-72 flex-col bg-sidebar p-0"
+            >
               <SheetHeader className="border-b border-sidebar-border px-5 py-4">
                 <SheetTitle className="flex items-center gap-2">
                   <Brand />
@@ -235,7 +267,6 @@ export default function AppShell() {
           )}
         </main>
       </div>
-
     </div>
   );
 }

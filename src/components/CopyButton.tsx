@@ -31,7 +31,9 @@ export function CopyButton({
           toast.success("Copied to clipboard");
           setTimeout(() => setCopied(false), 1600);
         } catch {
-          toast.error("Could not copy — your browser blocked clipboard access.");
+          toast.error(
+            "Could not copy - your browser blocked clipboard access.",
+          );
         }
       }}
     >

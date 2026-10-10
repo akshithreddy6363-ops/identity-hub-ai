@@ -93,15 +93,15 @@ function SectionHeading({
         <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
       </div>
       {subtitle && (
-        <p className="mt-1 pl-[42px] text-sm text-muted-foreground">{subtitle}</p>
+        <p className="mt-1 pl-[42px] text-sm text-muted-foreground">
+          {subtitle}
+        </p>
       )}
     </div>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Skills → evidence                                                   */
-/* ------------------------------------------------------------------ */
+// Skills and evidence
 
 function SkillEvidence({ profile }: { profile: PublicProfile }) {
   const [selected, setSelected] = useState<string | null>(null);
@@ -122,7 +122,8 @@ function SkillEvidence({ profile }: { profile: PublicProfile }) {
   const activeEvidence = selected ? evidenceFor(selected) : null;
   const hasEvidence =
     activeEvidence &&
-    (activeEvidence.projects.length > 0 || activeEvidence.achievements.length > 0);
+    (activeEvidence.projects.length > 0 ||
+      activeEvidence.achievements.length > 0);
 
   return (
     <section className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6">
@@ -189,7 +190,7 @@ function SkillEvidence({ profile }: { profile: PublicProfile }) {
             <p className="flex items-center gap-2 text-sm text-muted-foreground">
               <Lightbulb className="size-4" />
               Listed as a skill, but no published project or achievement links
-              to it yet — treat it as a claim, not a proven one.
+              to it yet - treat it as a claim, not a proven one.
             </p>
           ) : (
             <div className="grid gap-2 sm:grid-cols-2">
@@ -200,7 +201,9 @@ function SkillEvidence({ profile }: { profile: PublicProfile }) {
                 >
                   <FolderGit2 className="mt-0.5 size-4 shrink-0 text-primary" />
                   <div className="min-w-0">
-                    <p className="truncate text-[13px] font-medium">{project.title}</p>
+                    <p className="truncate text-[13px] font-medium">
+                      {project.title}
+                    </p>
                     <p className="truncate text-xs text-muted-foreground">
                       Project · {PROJECT_STATUS_META[project.status].label}
                     </p>
@@ -214,12 +217,16 @@ function SkillEvidence({ profile }: { profile: PublicProfile }) {
                 >
                   <Trophy className="mt-0.5 size-4 shrink-0 text-primary" />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-medium">{achievement.title}</p>
+                    <p className="truncate text-[13px] font-medium">
+                      {achievement.title}
+                    </p>
                     <div className="mt-1 flex items-center gap-2">
                       <p className="truncate text-xs text-muted-foreground">
                         {ACHIEVEMENT_KIND_META[achievement.kind]}
                       </p>
-                      <VerificationBadge verification={achievement.verification} />
+                      <VerificationBadge
+                        verification={achievement.verification}
+                      />
                     </div>
                   </div>
                 </div>
@@ -232,9 +239,7 @@ function SkillEvidence({ profile }: { profile: PublicProfile }) {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Achievement passport                                                */
-/* ------------------------------------------------------------------ */
+// Achievement passport
 
 function AchievementPassport({ profile }: { profile: PublicProfile }) {
   return (
@@ -249,7 +254,9 @@ function AchievementPassport({ profile }: { profile: PublicProfile }) {
         <span className="absolute left-[7px] top-2 h-full w-px bg-border" />
         {profile.achievements.map((item) => {
           const Icon =
-            item.kind === "hackathon" || item.kind === "award" || item.kind === "milestone"
+            item.kind === "hackathon" ||
+            item.kind === "award" ||
+            item.kind === "milestone"
               ? Trophy
               : item.kind === "internship"
                 ? BriefcaseIcon
@@ -269,7 +276,9 @@ function AchievementPassport({ profile }: { profile: PublicProfile }) {
                     <h3 className="text-sm font-semibold">{item.title}</h3>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {[item.issuer, formatDate(item.occurredAt)].filter(Boolean).join(" · ")}
+                    {[item.issuer, formatDate(item.occurredAt)]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </p>
                 </div>
                 <VerificationBadge verification={item.verification} />
@@ -308,17 +317,22 @@ function AchievementPassport({ profile }: { profile: PublicProfile }) {
 
 function BriefcaseIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-      strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
       <rect x="2" y="7" width="20" height="14" rx="2" />
       <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
     </svg>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* AI twin chat                                                        */
-/* ------------------------------------------------------------------ */
+// AI twin chat
 
 interface ChatMessage {
   role: "visitor" | "twin";
@@ -359,17 +373,25 @@ function TwinChat({ profile }: { profile: PublicProfile }) {
       setMessages((prev) => [
         ...prev,
         result.ok
-          ? { role: "twin", text: result.answer, mode: result.mode, note: result.note }
+          ? {
+              role: "twin",
+              text: result.answer,
+              mode: result.mode,
+              note: result.note,
+            }
           : {
               role: "twin",
-              text: `Sorry — ${result.error}`,
+              text: `Sorry - ${result.error}`,
               mode: undefined,
             },
       ]);
     } catch {
       setMessages((prev) => [
         ...prev,
-        { role: "twin", text: "The twin is temporarily unavailable. Try again in a moment." },
+        {
+          role: "twin",
+          text: "The twin is temporarily unavailable. Try again in a moment.",
+        },
       ]);
     } finally {
       setAsking(false);
@@ -392,12 +414,15 @@ function TwinChat({ profile }: { profile: PublicProfile }) {
             </h2>
           </div>
           <p className="mt-1 pl-[42px] text-sm text-muted-foreground">
-            Answers only from this published profile — it will say so when
+            Answers only from this published profile - it will say so when
             something isn't there.
           </p>
         </div>
         <AIModeBadge
-          mode={[...messages].reverse().find((m) => m.role === "twin" && m.mode)?.mode}
+          mode={
+            [...messages].reverse().find((m) => m.role === "twin" && m.mode)
+              ?.mode
+          }
         />
       </div>
 
@@ -408,7 +433,7 @@ function TwinChat({ profile }: { profile: PublicProfile }) {
         {messages.length === 0 && !asking && (
           <div className="flex flex-col items-start gap-3">
             <div className="max-w-[90%] rounded-2xl rounded-bl-md border bg-background px-3.5 py-2.5 text-[13px] leading-5 text-muted-foreground">
-              Hi — ask me anything about {profile.displayName.split(" ")[0]}'s
+              Hi - ask me anything about {profile.displayName.split(" ")[0]}'s
               projects, skills or achievements.
             </div>
             <div className="flex flex-wrap gap-2">
@@ -442,7 +467,9 @@ function TwinChat({ profile }: { profile: PublicProfile }) {
               <div className="mt-1 flex items-center gap-2">
                 <AIModeBadge mode={message.mode} />
                 {message.note && (
-                  <span className="text-[11px] text-muted-foreground">demo answer</span>
+                  <span className="text-[11px] text-muted-foreground">
+                    demo answer
+                  </span>
                 )}
               </div>
               {message.note && (
@@ -457,7 +484,7 @@ function TwinChat({ profile }: { profile: PublicProfile }) {
         {asking && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Loader2 className="size-3.5 animate-spin" />
-            Thinking…
+            Thinking...
           </div>
         )}
       </div>
@@ -472,11 +499,15 @@ function TwinChat({ profile }: { profile: PublicProfile }) {
         <Input
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
-          placeholder={`Ask about ${profile.displayName.split(" ")[0]}'s profile…`}
+          placeholder={`Ask about ${profile.displayName.split(" ")[0]}'s profile...`}
           maxLength={400}
         />
         <Button type="submit" disabled={asking || !question.trim()}>
-          {asking ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+          {asking ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Send className="size-4" />
+          )}
           Ask
         </Button>
       </form>
@@ -488,9 +519,7 @@ function TwinChat({ profile }: { profile: PublicProfile }) {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Proof-of-Skill challenges                                           */
-/* ------------------------------------------------------------------ */
+// Proof-of-Skill challenges
 
 function ProfileChallenges({ profile }: { profile: PublicProfile }) {
   return (
@@ -505,7 +534,10 @@ function ProfileChallenges({ profile }: { profile: PublicProfile }) {
         {profile.challenges.map((challenge) => {
           const meta = PROVENANCE_META[challenge.provenance];
           return (
-            <article key={challenge._id} className="rounded-xl border bg-muted/20 p-4">
+            <article
+              key={challenge._id}
+              className="rounded-xl border bg-muted/20 p-4"
+            >
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <h3 className="text-[15px] font-semibold">{challenge.title}</h3>
                 <Badge
@@ -583,9 +615,7 @@ function ProfileChallenges({ profile }: { profile: PublicProfile }) {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* AI Interview Mode                                                   */
-/* ------------------------------------------------------------------ */
+// AI Interview Mode
 
 function InterviewMode({ profile }: { profile: PublicProfile }) {
   const runInterview = useAction(api.ai.runInterview);
@@ -604,7 +634,10 @@ function InterviewMode({ profile }: { profile: PublicProfile }) {
     setOutcome(null);
     setError(null);
     try {
-      const result = await runInterview({ slug: profile.slug, track: nextTrack });
+      const result = await runInterview({
+        slug: profile.slug,
+        track: nextTrack,
+      });
       if (result.ok) {
         setOutcome({
           result: result.result,
@@ -637,12 +670,15 @@ function InterviewMode({ profile }: { profile: PublicProfile }) {
             <span className="flex size-8 items-center justify-center rounded-lg bg-primary/15 text-primary">
               <MessageSquare className="size-4" />
             </span>
-            <h2 className="text-lg font-semibold tracking-tight">AI Interview Mode</h2>
+            <h2 className="text-lg font-semibold tracking-tight">
+              AI Interview Mode
+            </h2>
           </div>
           <p className="mt-1 max-w-2xl pl-[42px] text-sm text-muted-foreground">
-            Structured questions about {profile.displayName.split(" ")[0]}&apos;s
-            published skills, projects and achievements — each answer links the
-            evidence behind it, and anything missing is named instead of invented.
+            Structured questions about {profile.displayName.split(" ")[0]}
+            &apos;s published skills, projects and achievements - each answer
+            links the evidence behind it, and anything missing is named instead
+            of invented.
           </p>
         </div>
         {outcome && <AIModeBadge mode={outcome.mode} />}
@@ -671,14 +707,14 @@ function InterviewMode({ profile }: { profile: PublicProfile }) {
       {loading && (
         <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
           <Loader2 className="size-3.5 animate-spin" />
-          Going through the published profile…
+          Going through the published profile...
         </div>
       )}
 
       {!loading && !outcome && !error && (
         <p className="mt-4 rounded-xl border border-dashed bg-muted/30 px-4 py-4 text-[13px] leading-6 text-muted-foreground">
           Pick an interview track to see evidence-linked answers. Answers come
-          only from this profile — questions it cannot answer are reported as
+          only from this profile - questions it cannot answer are reported as
           missing information, never guessed.
         </p>
       )}
@@ -700,7 +736,9 @@ function InterviewMode({ profile }: { profile: PublicProfile }) {
               <p
                 className={cn(
                   "mt-1.5 text-[13px] leading-6",
-                  answer.answered ? "text-foreground/90" : "text-muted-foreground italic",
+                  answer.answered
+                    ? "text-foreground/90"
+                    : "text-muted-foreground italic",
                 )}
               >
                 {answer.answer}
@@ -765,9 +803,11 @@ function InterviewMode({ profile }: { profile: PublicProfile }) {
             </div>
           )}
 
-          {outcome.note && <AIModeNote mode={outcome.mode} note={outcome.note} />}
+          {outcome.note && (
+            <AIModeNote mode={outcome.mode} note={outcome.note} />
+          )}
           <p className="text-[11px] text-muted-foreground">
-            Evidence is matched from the published profile — the wording is
+            Evidence is matched from the published profile - the wording is
             assisted, the proof is not.
           </p>
         </div>
@@ -776,9 +816,7 @@ function InterviewMode({ profile }: { profile: PublicProfile }) {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Page                                                                */
-/* ------------------------------------------------------------------ */
+// Page
 
 const SECTION_ANCHORS = [
   { href: "#about", label: "About", Icon: UserRound },
@@ -791,9 +829,8 @@ const SECTION_ANCHORS = [
 ] as const;
 
 /**
- * Renders a published profile. Shared by the public page and Smart Share
- * Profiles — `banner` lets the share view explain which tailored view you are
- * looking at, and translations only ever arrive from the public query.
+ * Renders a published profile. Used by the public page and by Smart Share
+ * Profiles, where `banner` explains which tailored view is being shown.
  */
 export function ProfileView({
   profile,
@@ -812,7 +849,7 @@ export function ProfileView({
   const translation: Translation | null =
     locale === "en"
       ? null
-      : translations.find((item) => item.locale === locale) ?? null;
+      : (translations.find((item) => item.locale === locale) ?? null);
 
   // A translation only ever substitutes the prose fields; project titles,
   // technology names and links always stay exactly as published.
@@ -837,10 +874,10 @@ export function ProfileView({
       {profile.isSample && (
         <div className="mb-6 flex flex-col gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-[13px] leading-6 text-amber-700 dark:text-amber-300">
           <p>
-            <strong className="font-semibold">Sample profile.</strong> All content
-            on this page is clearly labelled demonstration data for LinkSphere AI
-            — not a real person's verified history. No entry here is marked
-            “Verified”.
+            <strong className="font-semibold">Sample profile.</strong> All
+            content on this page is clearly labelled demonstration data for
+            LinkSphere AI - not a real person's verified history. No entry here
+            is marked 'Verified'.
           </p>
           <Link
             to={`/s/${SAMPLE_SHARE_TOKEN}`}
@@ -863,7 +900,8 @@ export function ProfileView({
                   alt=""
                   className="size-full rounded-full object-cover"
                   onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                    (e.currentTarget as HTMLImageElement).style.display =
+                      "none";
                   }}
                 />
               ) : (
@@ -882,7 +920,9 @@ export function ProfileView({
                 )}
               </div>
               {headline && (
-                <p className="mt-1 text-[15px] text-muted-foreground">{headline}</p>
+                <p className="mt-1 text-[15px] text-muted-foreground">
+                  {headline}
+                </p>
               )}
               {translation && (
                 <Badge
@@ -919,7 +959,9 @@ export function ProfileView({
                   {LOCALE_META.en.native}
                 </button>
                 {TRANSLATABLE_LOCALES.map((code) => {
-                  const available = translations.some((item) => item.locale === code);
+                  const available = translations.some(
+                    (item) => item.locale === code,
+                  );
                   return (
                     <button
                       key={code}
@@ -949,7 +991,11 @@ export function ProfileView({
             <CopyButton value={url} />
             {profile.contact?.resumeUrl && (
               <Button size="sm" variant="outline" asChild>
-                <a href={profile.contact.resumeUrl} target="_blank" rel="noreferrer">
+                <a
+                  href={profile.contact.resumeUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   <FileText className="size-4" />
                   Resume
                 </a>
@@ -1024,9 +1070,9 @@ export function ProfileView({
             <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-primary/25 bg-primary/5 px-3.5 py-2.5 text-xs leading-5">
               <Languages className="size-3.5 shrink-0 text-primary" />
               <span className="flex-1">
-                Showing the {LOCALE_META[translation.locale].label} version of this
-                profile. The owner reviewed the AI translation; project names,
-                technologies and links stay exactly as published.
+                Showing the {LOCALE_META[translation.locale].label} version of
+                this profile. The owner reviewed the AI translation; project
+                names, technologies and links stay exactly as published.
               </span>
               <AIModeBadge mode={translation.mode} />
             </div>
@@ -1087,7 +1133,7 @@ export function ProfileView({
             id="projects"
             icon={FolderGit2}
             title="Projects"
-            subtitle="What they've actually built — with the stack behind each one."
+            subtitle="What they've actually built - with the stack behind each one."
           />
           <div className="grid gap-4 md:grid-cols-2">
             {profile.projects.map((project) => (
@@ -1119,7 +1165,9 @@ export function ProfileView({
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                           Problem
                         </p>
-                        <p className="mt-0.5 text-xs leading-5">{project.problem}</p>
+                        <p className="mt-0.5 text-xs leading-5">
+                          {project.problem}
+                        </p>
                       </div>
                     )}
                     {project.solution && (
@@ -1127,7 +1175,9 @@ export function ProfileView({
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                           Solution
                         </p>
-                        <p className="mt-0.5 text-xs leading-5">{project.solution}</p>
+                        <p className="mt-0.5 text-xs leading-5">
+                          {project.solution}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -1144,7 +1194,9 @@ export function ProfileView({
                 </div>
                 <div className="mt-auto flex flex-wrap gap-4 border-t pt-3 text-xs font-medium">
                   {project.role && (
-                    <span className="text-muted-foreground">Role: {project.role}</span>
+                    <span className="text-muted-foreground">
+                      Role: {project.role}
+                    </span>
                   )}
                   {project.repoUrl && (
                     <a
@@ -1186,9 +1238,7 @@ export function ProfileView({
       {profile.challenges.length > 0 && <ProfileChallenges profile={profile} />}
 
       {/* AI Interview Mode */}
-      {profile.twinEnabled && (
-        <InterviewMode profile={profile} />
-      )}
+      {profile.twinEnabled && <InterviewMode profile={profile} />}
 
       {/* Twin */}
       {profile.twinEnabled && (
@@ -1249,9 +1299,7 @@ export default function PublicProfile({ slug }: { slug: string }) {
   }, [isSampleSlug, profile, ensureSample]);
 
   const url =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/p/${slug}`
-      : "";
+    typeof window !== "undefined" ? `${window.location.origin}/p/${slug}` : "";
 
   return (
     <div className="min-h-screen bg-background">
@@ -1283,7 +1331,7 @@ export default function PublicProfile({ slug }: { slug: string }) {
             </div>
             <h1 className="text-lg font-semibold">Profile not found</h1>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              This link doesn&apos;t point to a published profile — it may have
+              This link doesn&apos;t point to a published profile - it may have
               been unpublished, deleted, or never existed.
             </p>
             <div className="mt-5 flex flex-wrap justify-center gap-2">

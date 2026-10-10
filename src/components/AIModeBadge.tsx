@@ -3,11 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Sparkles, FlaskConical } from "lucide-react";
 import type { AIMode } from "@/lib/linksphere";
 
-/**
- * Labels whether AI output came from a real model call ("live") or from the
- * deterministic fallback used when credentials are unavailable ("demo").
- * The distinction is mandatory — the app never passes demo work off as AI.
- */
+/** Shows whether AI output came from a real model call or the demo fallback. */
 export function AIModeBadge({
   mode,
   className,
@@ -44,7 +40,7 @@ export function AIModeBadge({
   );
 }
 
-/** The mandatory explanation shown underneath any demo-mode output. */
+/** Explanation shown underneath demo-mode output. */
 export function AIModeNote({ mode, note }: { mode?: AIMode; note?: string }) {
   if (mode !== "demo" || !note) return null;
   return (

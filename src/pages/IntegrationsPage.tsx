@@ -73,7 +73,9 @@ export default function IntegrationsPage() {
           status: "connected",
           items: mergeSelection(result.items, previous),
         });
-        toast.success(`Synced public repositories from GitHub (@${result.handle})`);
+        toast.success(
+          `Synced public repositories from GitHub (@${result.handle})`,
+        );
       } else {
         setError(result.error);
         toast.error(result.error);
@@ -125,12 +127,16 @@ export default function IntegrationsPage() {
       );
     } catch (caught) {
       toast.error(
-        caught instanceof Error ? caught.message : "Could not add the projects.",
+        caught instanceof Error
+          ? caught.message
+          : "Could not add the projects.",
       );
     }
   };
 
-  const selectedCount = (integration?.items ?? []).filter((i) => i.selected).length;
+  const selectedCount = (integration?.items ?? []).filter(
+    (i) => i.selected,
+  ).length;
   const isSimulated = integration?.status === "simulated";
 
   return (
@@ -149,7 +155,7 @@ export default function IntegrationsPage() {
       <Panel
         icon={Github}
         title="Connect a GitHub account"
-        description="Public repositories only — no tokens, no passwords, nothing private."
+        description="Public repositories only - no tokens, no passwords, nothing private."
         bodyClassName="flex flex-col gap-4"
       >
         <div className="grid gap-2">
@@ -162,7 +168,8 @@ export default function IntegrationsPage() {
               placeholder="octocat"
               className="min-w-48 flex-1"
               onKeyDown={(e) => {
-                if (e.key === "Enter" && !busy) runSync(handle, integration?.items);
+                if (e.key === "Enter" && !busy)
+                  runSync(handle, integration?.items);
               }}
             />
             <Button
@@ -174,12 +181,13 @@ export default function IntegrationsPage() {
               ) : (
                 <RefreshCw className="size-4" />
               )}
-              {busy ? "Syncing…" : "Sync repositories"}
+              {busy ? "Syncing..." : "Sync repositories"}
             </Button>
           </div>
           <p className="text-xs leading-5 text-muted-foreground">
-            We read the public GitHub REST API with your username only. LinkSphere
-            stores the repository metadata you select — never credentials.
+            We read the public GitHub REST API with your username only.
+            LinkSphere stores the repository metadata you select - never
+            credentials.
           </p>
         </div>
 
@@ -190,7 +198,12 @@ export default function IntegrationsPage() {
               {error}
             </p>
             <div>
-              <Button size="sm" variant="outline" onClick={runSimulated} disabled={busy}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={runSimulated}
+                disabled={busy}
+              >
                 <FlaskConical className="size-3.5" />
                 Load simulated sample repositories
               </Button>
@@ -289,8 +302,8 @@ export default function IntegrationsPage() {
             {isSimulated && (
               <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-[13px] leading-6 text-amber-700 dark:text-amber-300">
                 These repositories are{" "}
-                <strong className="font-semibold">simulated sample data</strong>,
-                not fetched from GitHub. Anything you import is labelled as
+                <strong className="font-semibold">simulated sample data</strong>
+                , not fetched from GitHub. Anything you import is labelled as
                 simulated in your project summary.
               </p>
             )}
@@ -303,10 +316,13 @@ export default function IntegrationsPage() {
               {integration.lastSyncedAt && (
                 <span>
                   Last synced{" "}
-                  {new Date(integration.lastSyncedAt).toLocaleString(undefined, {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })}
+                  {new Date(integration.lastSyncedAt).toLocaleString(
+                    undefined,
+                    {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    },
+                  )}
                 </span>
               )}
             </div>
@@ -317,7 +333,9 @@ export default function IntegrationsPage() {
                   key={item.externalId}
                   className={cn(
                     "flex cursor-pointer items-start gap-3 rounded-lg border px-3.5 py-3 transition-colors",
-                    item.selected ? "border-primary/40 bg-primary/5" : "bg-muted/20",
+                    item.selected
+                      ? "border-primary/40 bg-primary/5"
+                      : "bg-muted/20",
                   )}
                 >
                   <Checkbox
@@ -379,13 +397,17 @@ export default function IntegrationsPage() {
                   onCheckedChange={setPublishImported}
                   id="publish-imported"
                 />
-                <Label htmlFor="publish-imported" className="text-sm font-normal">
+                <Label
+                  htmlFor="publish-imported"
+                  className="text-sm font-normal"
+                >
                   Publish imported projects immediately
                 </Label>
               </div>
               <Button onClick={handleImport} disabled={selectedCount === 0}>
                 <Upload className="size-4" />
-                Add {selectedCount > 0 ? selectedCount : ""} selected to projects
+                Add {selectedCount > 0 ? selectedCount : ""} selected to
+                projects
               </Button>
             </div>
           </Panel>
@@ -398,9 +420,9 @@ export default function IntegrationsPage() {
         bodyClassName="text-sm leading-6 text-muted-foreground"
       >
         Imported repositories become projects on your profile with their
-        description, language and repository link. They are marked as coming from
-        GitHub, so it is always clear that the text came from an external source —
-        and you can edit or remove them like any other project.
+        description, language and repository link. They are marked as coming
+        from GitHub, so it is always clear that the text came from an external
+        source - and you can edit or remove them like any other project.
       </Panel>
     </div>
   );

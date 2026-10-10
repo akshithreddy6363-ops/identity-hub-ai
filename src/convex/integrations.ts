@@ -6,21 +6,20 @@ import { action, mutation, query } from "./_generated/server";
 /**
  * Living Portfolio integrations (GitHub).
  *
- * Only PUBLIC repository data is read, and no external credentials or tokens are
- * ever stored — the user authorises by giving a public username. If GitHub is
- * unreachable (network, rate limit), the UI can fall back to clearly-labelled
- * SIMULATED sample repos: those rows carry the "simulated" status and every
- * imported project summary is prefixed so a simulated import can never be
- * mistaken for a real sync.
+ * We read public repository data only and store no credentials; the user
+ * authorises by giving a username. When GitHub is unreachable the UI can fall
+ * back to simulated sample repos, which carry status "simulated" and have their
+ * imported summaries prefixed so they can't pass as a real sync.
  */
 
-const SAMPLE_NOTE = "[Simulated sample data — not fetched from GitHub] ";
+const SAMPLE_NOTE = "[Simulated sample data - not fetched from GitHub] ";
 
 const SAMPLE_REPOS = [
   {
     externalId: "simulated-cropsense",
     name: "crop-sense",
-    description: "Offline-friendly crop disease detection demo (simulated sample entry).",
+    description:
+      "Offline-friendly crop disease detection demo (simulated sample entry).",
     url: "https://github.com",
     language: "Python",
     stars: 84,
@@ -29,7 +28,8 @@ const SAMPLE_REPOS = [
   {
     externalId: "simulated-transitpulse",
     name: "transit-pulse",
-    description: "Real-time transit dashboard experiments (simulated sample entry).",
+    description:
+      "Real-time transit dashboard experiments (simulated sample entry).",
     url: "https://github.com",
     language: "TypeScript",
     stars: 51,
@@ -38,7 +38,8 @@ const SAMPLE_REPOS = [
   {
     externalId: "simulated-studysphere",
     name: "study-sphere",
-    description: "Collaborative study rooms prototype (simulated sample entry).",
+    description:
+      "Collaborative study rooms prototype (simulated sample entry).",
     url: "https://github.com",
     language: "TypeScript",
     stars: 23,
@@ -113,7 +114,7 @@ export const syncGithub = action({
           error:
             response.status === 404
               ? `GitHub has no user called "${login}".`
-              : `GitHub returned ${response.status}. Public API limits may apply — try again later.`,
+              : `GitHub returned ${response.status}. Public API limits may apply - try again later.`,
           simulatedAvailable: true,
         };
       }
@@ -163,7 +164,12 @@ export const loadSimulated = action({
   handler: async (
     _ctx,
     { handle },
-  ): Promise<{ ok: true; mode: "simulated"; handle: string; items: RepoItem[] }> => {
+  ): Promise<{
+    ok: true;
+    mode: "simulated";
+    handle: string;
+    items: RepoItem[];
+  }> => {
     const login = normaliseHandle(handle ?? "") || "sample-user";
     return {
       ok: true,

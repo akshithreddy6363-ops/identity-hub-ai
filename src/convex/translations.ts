@@ -5,12 +5,9 @@ import { localeValidator, resultModeValidator } from "./schema";
 import { mutation, query } from "./_generated/server";
 
 /**
- * Multilingual profiles.
- *
- * Translations are produced by the AI action, then the owner reviews them here.
- * `reviewed` records whether the owner has looked at the text before it is
- * shown publicly, and `mode` preserves whether a model or the demo fallback
- * produced it — the public page labels both.
+ * Multilingual profiles. The AI action writes a translation, the owner reviews
+ * it here, and only reviewed rows reach the public page. "mode" records whether
+ * a model or the demo fallback produced the text.
  */
 export const listMine = query({
   args: {},
@@ -57,7 +54,10 @@ export const save = mutation({
       bio: args.bio?.trim() || undefined,
       goals: args.goals?.trim() || undefined,
       education: args.education?.trim() || undefined,
-      interests: args.interests.map((i) => i.trim()).filter(Boolean).slice(0, 30),
+      interests: args.interests
+        .map((i) => i.trim())
+        .filter(Boolean)
+        .slice(0, 30),
       mode: args.mode,
       reviewed: args.reviewed,
       updatedAt: now,

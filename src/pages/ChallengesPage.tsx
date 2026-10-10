@@ -181,7 +181,9 @@ function ChallengeDialog({
       onOpenChange(false);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Could not save the challenge.",
+        error instanceof Error
+          ? error.message
+          : "Could not save the challenge.",
       );
     } finally {
       setSaving(false);
@@ -198,7 +200,7 @@ function ChallengeDialog({
             {challenge ? "Edit challenge" : "Add challenge"}
           </DialogTitle>
           <DialogDescription>
-            Show the challenge, your submission, the outcome and the evidence —
+            Show the challenge, your submission, the outcome and the evidence -
             and say honestly whether it is platform-verified or self-submitted.
           </DialogDescription>
         </DialogHeader>
@@ -213,9 +215,11 @@ function ChallengeDialog({
                 set("title", e.target.value);
                 if (titleError) setTitleError(null);
               }}
-              placeholder="Two Sum — hash map solution"
+              placeholder="Two Sum - hash map solution"
             />
-            {titleError && <p className="text-xs text-destructive">{titleError}</p>}
+            {titleError && (
+              <p className="text-xs text-destructive">{titleError}</p>
+            )}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
@@ -245,7 +249,7 @@ function ChallengeDialog({
                 id="ch-platform"
                 value={draft.platform}
                 onChange={(e) => set("platform", e.target.value)}
-                placeholder="LeetCode, Figma Community…"
+                placeholder="LeetCode, Figma Community..."
               />
             </div>
             <div className="grid gap-2">
@@ -277,7 +281,7 @@ function ChallengeDialog({
                 id="ch-submission"
                 value={draft.submissionUrl}
                 onChange={(e) => set("submissionUrl", e.target.value)}
-                placeholder="https://…"
+                placeholder="https://..."
               />
             </div>
             <div className="grid gap-2">
@@ -296,7 +300,10 @@ function ChallengeDialog({
               <Label>Provenance</Label>
               <Badge
                 variant="outline"
-                className={cn("gap-1 px-2 py-0.5 text-[11px]", provenanceMeta.badge)}
+                className={cn(
+                  "gap-1 px-2 py-0.5 text-[11px]",
+                  provenanceMeta.badge,
+                )}
               >
                 {draft.provenance === "platform_verified" ? (
                   <BadgeCheck className="size-3" />
@@ -361,7 +368,10 @@ function ChallengeDialog({
               </p>
             )}
             {draft.evidence.map((item, index) => (
-              <div key={item.id} className="grid gap-2 sm:grid-cols-[180px_1fr]">
+              <div
+                key={item.id}
+                className="grid gap-2 sm:grid-cols-[180px_1fr]"
+              >
                 <Input
                   value={item.label}
                   placeholder="Label"
@@ -374,7 +384,7 @@ function ChallengeDialog({
                 <div className="flex gap-2">
                   <Input
                     value={item.url}
-                    placeholder="https://…"
+                    placeholder="https://..."
                     onChange={(e) => {
                       const next = [...draft.evidence];
                       next[index] = { ...next[index], url: e.target.value };
@@ -485,7 +495,7 @@ export default function ChallengesPage() {
             Proof-of-Skill Challenges
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Attach completed coding, design and problem-solving challenges —
+            Attach completed coding, design and problem-solving challenges -
             with your submission, the outcome and the evidence behind it.
           </p>
         </div>
@@ -504,11 +514,13 @@ export default function ChallengesPage() {
       <Panel
         icon={Swords}
         title="Verified vs self-submitted"
-        description="LinkSphere does not re-verify external results — the UI says so wherever a challenge appears."
+        description="LinkSphere does not re-verify external results - the UI says so wherever a challenge appears."
         bodyClassName="text-sm leading-6 text-muted-foreground"
       >
         Mark a challenge{" "}
-        <strong className="font-medium text-foreground">Platform-verified</strong>{" "}
+        <strong className="font-medium text-foreground">
+          Platform-verified
+        </strong>{" "}
         only when you are attaching the real platform result link. Everyone who
         views it will see that the result comes from that platform and that
         LinkSphere itself has not checked it. Everything else is labelled{" "}
@@ -527,7 +539,7 @@ export default function ChallengesPage() {
         <EmptyState
           icon={CirclePlus}
           title="No challenges yet"
-          description="Add a challenge you completed — a LeetCode problem, a design sprint, a debugging exercise — with a link to the submission and the result."
+          description="Add a challenge you completed - a LeetCode problem, a design sprint, a debugging exercise - with a link to the submission and the result."
           action={
             <Button
               onClick={() => {
@@ -588,7 +600,10 @@ export default function ChallengesPage() {
                       <Badge
                         variant="outline"
                         title={meta.hint}
-                        className={cn("gap-1 px-2 py-0.5 text-[11px]", meta.badge)}
+                        className={cn(
+                          "gap-1 px-2 py-0.5 text-[11px]",
+                          meta.badge,
+                        )}
                       >
                         {item.provenance === "platform_verified" ? (
                           <BadgeCheck className="size-3" />
@@ -634,7 +649,7 @@ export default function ChallengesPage() {
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>
-                            Delete “{item.title}”?
+                            Delete '{item.title}'?
                           </AlertDialogTitle>
                           <AlertDialogDescription>
                             The challenge and its evidence links will be removed

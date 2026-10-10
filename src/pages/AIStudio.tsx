@@ -82,12 +82,18 @@ function TwinTab() {
     try {
       const result = await askTwin({ slug: profile.slug, question: q });
       if (result.ok) {
-        setAnswer({ text: result.answer, mode: result.mode, note: result.note });
+        setAnswer({
+          text: result.answer,
+          mode: result.mode,
+          note: result.note,
+        });
       } else {
         toast.error(result.error);
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "The twin is unavailable.");
+      toast.error(
+        error instanceof Error ? error.message : "The twin is unavailable.",
+      );
     } finally {
       setAsking(false);
     }
@@ -110,11 +116,15 @@ function TwinTab() {
                 try {
                   await updateProfile({ twinEnabled: checked });
                   toast.success(
-                    checked ? "Twin enabled" : "Twin disabled on your public page",
+                    checked
+                      ? "Twin enabled"
+                      : "Twin disabled on your public page",
                   );
                 } catch (error) {
                   toast.error(
-                    error instanceof Error ? error.message : "Could not update.",
+                    error instanceof Error
+                      ? error.message
+                      : "Could not update.",
                   );
                 }
               }}
@@ -134,7 +144,7 @@ function TwinTab() {
           />
           <div className="flex items-center justify-between">
             <p className="text-xs text-muted-foreground">
-              {twinIntro.length}/600 — style only; the twin still refuses to
+              {twinIntro.length}/600 - style only; the twin still refuses to
               invent facts.
             </p>
             <Button size="sm" onClick={handleSave} disabled={saving}>
@@ -150,7 +160,7 @@ function TwinTab() {
         title="Test your twin"
         description={
           profile.published
-            ? "Ask exactly what a visitor would ask — this runs against your published profile."
+            ? "Ask exactly what a visitor would ask - this runs against your published profile."
             : "Your profile is still a draft. As the owner you can preview the twin; visitors cannot see it until you publish."
         }
       >
@@ -181,7 +191,7 @@ function TwinTab() {
           <Input
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-            placeholder="Ask anything about this profile…"
+            placeholder="Ask anything about this profile..."
             maxLength={400}
           />
           <Button type="submit" disabled={asking || !question.trim()}>
@@ -197,7 +207,7 @@ function TwinTab() {
         {asking && (
           <p className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
-            Thinking…
+            Thinking...
           </p>
         )}
 
@@ -258,7 +268,9 @@ function BioTab() {
         setText(result.text);
         setMode(result.mode);
         setNote(result.note);
-        toast.success(result.mode === "live" ? "Draft generated" : "Demo draft generated");
+        toast.success(
+          result.mode === "live" ? "Draft generated" : "Demo draft generated",
+        );
       } else {
         toast.error(result.error);
       }
@@ -297,7 +309,7 @@ function BioTab() {
               ) : (
                 <Sparkles className="size-4" />
               )}
-              {loading ? "Writing…" : "Generate draft"}
+              {loading ? "Writing..." : "Generate draft"}
             </Button>
           </div>
         }
@@ -308,10 +320,14 @@ function BioTab() {
           </p>
           <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <li>Name: {profile.displayName}</li>
-            <li>Headline: {profile.headline || "—"}</li>
-            <li>Skills: {profile.skills.map((s) => s.name).join(", ") || "—"}</li>
-            <li>Projects: {(projects ?? []).map((p) => p.title).join(", ") || "—"}</li>
-            <li>Education: {profile.education || "—"}</li>
+            <li>Headline: {profile.headline || "-"}</li>
+            <li>
+              Skills: {profile.skills.map((s) => s.name).join(", ") || "-"}
+            </li>
+            <li>
+              Projects: {(projects ?? []).map((p) => p.title).join(", ") || "-"}
+            </li>
+            <li>Education: {profile.education || "-"}</li>
           </ul>
         </div>
 
@@ -320,7 +336,7 @@ function BioTab() {
           className="mt-4 leading-6"
           value={text ?? profile.bio ?? ""}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Your draft appears here — edit it freely."
+          placeholder="Your draft appears here - edit it freely."
           maxLength={2000}
         />
 
@@ -357,7 +373,10 @@ function BioTab() {
           </p>
         </div>
         <div className="mt-3">
-          <AIModeNote mode={mode} note={note ?? (mode === "demo" ? AI_NOTES.bio : undefined)} />
+          <AIModeNote
+            mode={mode}
+            note={note ?? (mode === "demo" ? AI_NOTES.bio : undefined)}
+          />
         </div>
       </Panel>
     </div>
@@ -415,7 +434,7 @@ function ProjectTab() {
               ) : (
                 <Sparkles className="size-4" />
               )}
-              {loading ? "Writing…" : "Draft summary"}
+              {loading ? "Writing..." : "Draft summary"}
             </Button>
           </div>
         }
@@ -446,7 +465,7 @@ function ProjectTab() {
             <TagInput
               value={technologies}
               onChange={setTechnologies}
-              placeholder="React, Node.js…"
+              placeholder="React, Node.js..."
             />
           </div>
           <div className="grid gap-2">
@@ -456,7 +475,7 @@ function ProjectTab() {
               rows={4}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Real-time transit dashboard; blends live vehicle feeds with delay analytics; built with Mapbox…"
+              placeholder="Real-time transit dashboard; blends live vehicle feeds with delay analytics; built with Mapbox..."
             />
           </div>
 
@@ -469,7 +488,12 @@ function ProjectTab() {
                 className="bg-background"
               />
               <div className="mt-3 flex items-center justify-between gap-3">
-                <AIModeNote mode={mode} note={note ?? (mode === "demo" ? AI_NOTES.project : undefined)} />
+                <AIModeNote
+                  mode={mode}
+                  note={
+                    note ?? (mode === "demo" ? AI_NOTES.project : undefined)
+                  }
+                />
                 <Button
                   size="sm"
                   variant="outline"
@@ -477,7 +501,7 @@ function ProjectTab() {
                   onClick={async () => {
                     try {
                       await navigator.clipboard.writeText(text);
-                      toast.success("Copied — paste it into your project");
+                      toast.success("Copied - paste it into your project");
                     } catch {
                       toast.error("Could not copy.");
                     }
@@ -495,9 +519,7 @@ function ProjectTab() {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Multilingual profiles                                              */
-/* ------------------------------------------------------------------ */
+// Multilingual profiles
 
 interface TranslationDraft {
   headline: string;
@@ -563,8 +585,8 @@ function TranslationTab() {
         setReviewed(false);
         toast.success(
           result.mode === "live"
-            ? "Translation generated — review it before publishing"
-            : "No model available — nothing was translated",
+            ? "Translation generated - review it before publishing"
+            : "No model available - nothing was translated",
         );
       } else {
         toast.error(result.error);
@@ -582,7 +604,12 @@ function TranslationTab() {
     if (!draft) return;
     setSaving(true);
     try {
-      await saveTranslation({ locale, ...draft, mode: mode ?? "demo", reviewed });
+      await saveTranslation({
+        locale,
+        ...draft,
+        mode: mode ?? "demo",
+        reviewed,
+      });
       toast.success(
         reviewed
           ? `Saved and published in ${LOCALE_META[locale].label}`
@@ -616,7 +643,7 @@ function TranslationTab() {
                 <Sparkles className="size-4" />
               )}
               {loading
-                ? "Translating…"
+                ? "Translating..."
                 : draft
                   ? "Regenerate"
                   : "Generate translation"}
@@ -641,11 +668,7 @@ function TranslationTab() {
               >
                 {LOCALE_META[code].native}
                 <span className="text-[11px] text-muted-foreground">
-                  {row
-                    ? row.reviewed
-                      ? "published"
-                      : "draft"
-                    : "not added"}
+                  {row ? (row.reviewed ? "published" : "draft") : "not added"}
                 </span>
               </button>
             );
@@ -657,10 +680,10 @@ function TranslationTab() {
             Original (English)
           </p>
           <ul className="mt-2 grid gap-1 text-xs text-muted-foreground">
-            <li>Headline: {profile.headline || "—"}</li>
-            <li className="line-clamp-2">Bio: {profile.bio || "—"}</li>
-            <li>Goals: {profile.goals || "—"}</li>
-            <li>Education: {profile.education || "—"}</li>
+            <li>Headline: {profile.headline || "-"}</li>
+            <li className="line-clamp-2">Bio: {profile.bio || "-"}</li>
+            <li>Goals: {profile.goals || "-"}</li>
+            <li>Education: {profile.education || "-"}</li>
           </ul>
         </div>
 
@@ -724,7 +747,7 @@ function TranslationTab() {
             <div className="flex items-center justify-between rounded-lg border bg-muted/30 px-3.5 py-3">
               <div>
                 <p className="text-sm font-medium">
-                  Reviewed — show on my public profile
+                  Reviewed - show on my public profile
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Unreviewed translations stay private in the dashboard.
@@ -736,8 +759,7 @@ function TranslationTab() {
             <AIModeNote
               mode={mode}
               note={
-                note ??
-                (mode === "demo" ? AI_NOTES.translation : undefined)
+                note ?? (mode === "demo" ? AI_NOTES.translation : undefined)
               }
             />
 
@@ -799,7 +821,7 @@ export default function AIStudio() {
       <EmptyState
         icon={Sparkles}
         title="Create your profile first"
-        description="AI Studio works with your profile data — set one up from the Overview page."
+        description="AI Studio works with your profile data - set one up from the Overview page."
       />
     );
   }
@@ -813,7 +835,7 @@ export default function AIStudio() {
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Twin configuration, bio writing and project summaries. Every result is
-          labelled live or demo — we never pass templates off as AI.
+          labelled live or demo - we never pass templates off as AI.
         </p>
       </header>
 

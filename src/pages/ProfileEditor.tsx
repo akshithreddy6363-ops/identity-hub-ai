@@ -58,7 +58,9 @@ function Field({
         {label}
       </Label>
       {children}
-      {hint && <p className="text-xs leading-5 text-muted-foreground">{hint}</p>}
+      {hint && (
+        <p className="text-xs leading-5 text-muted-foreground">{hint}</p>
+      )}
     </div>
   );
 }
@@ -189,7 +191,9 @@ export default function ProfileEditor() {
       setSlugDraft(null);
       setEdits({});
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not save the profile.");
+      toast.error(
+        error instanceof Error ? error.message : "Could not save the profile.",
+      );
     } finally {
       setSaving(false);
     }
@@ -220,8 +224,8 @@ export default function ProfileEditor() {
         setBioNote(result.note);
         toast.success(
           result.mode === "live"
-            ? "AI draft ready — review it, then save"
-            : "Demo draft ready — review it, then save",
+            ? "AI draft ready - review it, then save"
+            : "Demo draft ready - review it, then save",
         );
       } else {
         toast.error(result.error);
@@ -289,7 +293,8 @@ export default function ProfileEditor() {
                   alt=""
                   className="size-20 rounded-full object-cover"
                   onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                    (e.currentTarget as HTMLImageElement).style.display =
+                      "none";
                   }}
                 />
               ) : (
@@ -302,7 +307,7 @@ export default function ProfileEditor() {
             <Field label="Profile photo URL" htmlFor="avatarUrl">
               <Input
                 id="avatarUrl"
-                placeholder="https://…/photo.jpg"
+                placeholder="https://.../photo.jpg"
                 value={form.avatarUrl}
                 onChange={(e) => set("avatarUrl", e.target.value)}
               />
@@ -325,7 +330,11 @@ export default function ProfileEditor() {
                 />
               </Field>
             </div>
-            <Field label="Headline" htmlFor="headline" hint={`${form.headline.length}/160 characters`}>
+            <Field
+              label="Headline"
+              htmlFor="headline"
+              hint={`${form.headline.length}/160 characters`}
+            >
               <Input
                 id="headline"
                 value={form.headline}
@@ -342,7 +351,7 @@ export default function ProfileEditor() {
       <Panel
         icon={Sparkles}
         title="Bio"
-        description="Written in first person. Draft it with AI, then edit freely — nothing publishes without your save."
+        description="Written in first person. Draft it with AI, then edit freely - nothing publishes without your save."
         actions={
           <div className="flex items-center gap-2">
             <AIModeBadge mode={bioMode} />
@@ -357,7 +366,7 @@ export default function ProfileEditor() {
               ) : (
                 <Sparkles className="size-4" />
               )}
-              {bioLoading ? "Drafting…" : "Draft with AI"}
+              {bioLoading ? "Drafting..." : "Draft with AI"}
             </Button>
           </div>
         }
@@ -367,12 +376,12 @@ export default function ProfileEditor() {
           maxLength={2000}
           rows={5}
           onChange={(e) => set("bio", e.target.value)}
-          placeholder="I build practical web and machine-learning tools…"
+          placeholder="I build practical web and machine-learning tools..."
           className="leading-6"
         />
         <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
           <span>{form.bio.length}/2000 characters</span>
-          <span>AI drafts are suggestions — review before publishing.</span>
+          <span>AI drafts are suggestions - review before publishing.</span>
         </div>
         {bioNote && (
           <div className="mt-3">
@@ -387,17 +396,25 @@ export default function ProfileEditor() {
       </Panel>
 
       {/* Background */}
-      <Panel icon={UserRound} title="Background" description="Education, goals and interests.">
+      <Panel
+        icon={UserRound}
+        title="Background"
+        description="Education, goals and interests."
+      >
         <div className="grid gap-5">
           <Field label="Education" htmlFor="education">
             <Input
               id="education"
               value={form.education}
               onChange={(e) => set("education", e.target.value)}
-              placeholder="B.Tech Computer Science, 2023–2027"
+              placeholder="B.Tech Computer Science, 2023-2027"
             />
           </Field>
-          <Field label="Professional goals" htmlFor="goals" hint="Used by the matcher to judge fit.">
+          <Field
+            label="Professional goals"
+            htmlFor="goals"
+            hint="Used by the matcher to judge fit."
+          >
             <Textarea
               id="goals"
               rows={2}
@@ -410,7 +427,7 @@ export default function ProfileEditor() {
             <TagInput
               value={form.interests}
               onChange={(next) => set("interests", next)}
-              placeholder="Open source, Design, Hackathons…"
+              placeholder="Open source, Design, Hackathons..."
             />
           </Field>
         </div>
@@ -425,10 +442,11 @@ export default function ProfileEditor() {
         <TagInput
           value={form.skills}
           onChange={(next) => set("skills", next)}
-          placeholder="Python, React, Figma…"
+          placeholder="Python, React, Figma..."
         />
         <p className="mt-2 text-xs text-muted-foreground">
-          {form.skills.length} skill{form.skills.length === 1 ? "" : "s"} listed.
+          {form.skills.length} skill{form.skills.length === 1 ? "" : "s"}{" "}
+          listed.
         </p>
       </Panel>
 
@@ -456,11 +474,14 @@ export default function ProfileEditor() {
         <div className="grid gap-3">
           {form.socials.length === 0 && (
             <p className="rounded-lg border border-dashed bg-muted/30 px-3 py-4 text-center text-sm text-muted-foreground">
-              No links yet — add GitHub, LinkedIn, Instagram or YouTube.
+              No links yet - add GitHub, LinkedIn, Instagram or YouTube.
             </p>
           )}
           {form.socials.map((social, index) => (
-            <div key={social.id} className="grid gap-3 sm:grid-cols-[160px_1fr_auto]">
+            <div
+              key={social.id}
+              className="grid gap-3 sm:grid-cols-[160px_1fr_auto]"
+            >
               <Select
                 value={social.platform}
                 onValueChange={(value) => {
@@ -482,7 +503,7 @@ export default function ProfileEditor() {
               </Select>
               <Input
                 value={social.url}
-                placeholder="https://…"
+                placeholder="https://..."
                 onChange={(e) => {
                   const next = [...form.socials];
                   next[index] = { ...next[index], url: e.target.value };
@@ -507,12 +528,16 @@ export default function ProfileEditor() {
           ))}
 
           <div className="mt-2 grid gap-4 border-t pt-4 sm:grid-cols-2">
-            <Field label="Resume link" htmlFor="resumeUrl" hint="Direct URL to your PDF or portfolio.">
+            <Field
+              label="Resume link"
+              htmlFor="resumeUrl"
+              hint="Direct URL to your PDF or portfolio."
+            >
               <Input
                 id="resumeUrl"
                 value={form.resumeUrl}
                 onChange={(e) => set("resumeUrl", e.target.value)}
-                placeholder="https://…/resume.pdf"
+                placeholder="https://.../resume.pdf"
               />
             </Field>
             <div className="flex items-end gap-3 pb-1">
@@ -536,7 +561,7 @@ export default function ProfileEditor() {
       <Panel
         icon={Link2}
         title="Public URL"
-        description="Permanent — you can change the handle once; the link you share should stay stable."
+        description="Permanent - you can change the handle once; the link you share should stay stable."
       >
         <div className="grid gap-4">
           <Field label="Handle" htmlFor="slug">
@@ -568,13 +593,13 @@ export default function ProfileEditor() {
             {slugState === "checking" && (
               <span className="flex items-center gap-1.5 text-muted-foreground">
                 <Loader2 className="size-3.5 animate-spin" />
-                Checking availability…
+                Checking availability...
               </span>
             )}
             {slugState === "available" && (
               <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
                 <CircleCheck className="size-3.5" />
-                Available — save to claim it
+                Available - save to claim it
               </span>
             )}
             {slugState === "taken" && (
@@ -586,7 +611,9 @@ export default function ProfileEditor() {
           </div>
           <div className="flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2.5">
             <Link2 className="size-4 shrink-0 text-muted-foreground" />
-            <span className="truncate text-[13px] font-medium">{publicUrl}</span>
+            <span className="truncate text-[13px] font-medium">
+              {publicUrl}
+            </span>
             <CopyButton value={publicUrl} className="ml-auto" />
           </div>
         </div>
@@ -600,11 +627,17 @@ export default function ProfileEditor() {
       >
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className={cn(
-              "text-sm font-medium",
-              profile.published ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground",
-            )}>
-              {profile.published ? "Your profile is live" : "Your profile is a private draft"}
+            <p
+              className={cn(
+                "text-sm font-medium",
+                profile.published
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-muted-foreground",
+              )}
+            >
+              {profile.published
+                ? "Your profile is live"
+                : "Your profile is a private draft"}
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
               {profile.published
@@ -619,12 +652,14 @@ export default function ProfileEditor() {
                 await updateProfile({ published: checked });
                 toast.success(
                   checked
-                    ? "Published — your link is live"
-                    : "Unpublished — the link now hides your profile",
+                    ? "Published - your link is live"
+                    : "Unpublished - the link now hides your profile",
                 );
               } catch (error) {
                 toast.error(
-                  error instanceof Error ? error.message : "Could not update publishing.",
+                  error instanceof Error
+                    ? error.message
+                    : "Could not update publishing.",
                 );
               }
             }}

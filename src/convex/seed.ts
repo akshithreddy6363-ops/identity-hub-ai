@@ -3,13 +3,9 @@ import { mutation, type MutationCtx } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 
 /**
- * Inserts the clearly-labelled demonstration profile (plus its sample
- * projects and achievements) the first time anyone loads the app.
- *
- * Honesty rules baked into this data:
- *  - every row is flagged `isSample` so the public page shows a sample badge;
- *  - no achievement is marked "verified" — sample items are self-reported or
- *    verification-pending only, because nothing here has been verified.
+ * Seeds the demo profile, with its sample projects and achievements, the first
+ * time the app loads. Every row is flagged isSample so the public page shows a
+ * sample badge, and nothing here is marked "verified".
  */
 export async function insertSampleData(ctx: MutationCtx) {
   const now = Date.now();
@@ -26,11 +22,12 @@ export async function insertSampleData(ctx: MutationCtx) {
     isSample: true,
     displayName: "Aarav Mehta",
     headline: "CS student · Full-stack & applied-AI builder",
-    bio: "I build practical web and machine-learning tools — from crop-disease detection to real-time transit dashboards. I care about shipping things people actually use, and about showing the evidence behind what I claim to know.",
+    bio: "I build practical web and machine-learning tools - from crop-disease detection to real-time transit dashboards. I care about shipping things people actually use, and about showing the evidence behind what I claim to know.",
     location: "Bengaluru, India",
-    education: "B.Tech Computer Science, 2023–2027",
+    education: "B.Tech Computer Science, 2023-2027",
     interests: ["Open source", "Applied ML", "Design systems", "Hackathons"],
-    goals: "Land an applied-AI internship where I can ship models to production and learn from strong engineers.",
+    goals:
+      "Land an applied-AI internship where I can ship models to production and learn from strong engineers.",
     skills: [
       { id: "s1", name: "Python" },
       { id: "s2", name: "TypeScript" },
@@ -59,11 +56,10 @@ export async function insertSampleData(ctx: MutationCtx) {
       contact: true,
     },
     twinEnabled: true,
-    // Opted in so the Team Finder demo has a real, clearly-labelled sample
-    // profile to match against. Contact details are shared with signed-in
-    // members only (and the sample's links are generic placeholders).
+    // Opted in so the Team Finder demo has a sample profile to match against.
+    // Contact details go to signed-in members only.
     openToTeams: true,
-    teamAvailability: "Weekends · Aug–Oct 2026",
+    teamAvailability: "Weekends · Aug-Oct 2026",
     teamLookingFor: ["UI/UX design", "Mobile development", "Data analysis"],
     contactPolicy: "signed_in_members",
     twinIntro:
@@ -88,8 +84,10 @@ export async function insertSampleData(ctx: MutationCtx) {
       title: "CropSense",
       summary:
         "A mobile-first tool that photographs crop leaves and flags disease risk for smallholder farmers, running an offline-friendly vision model behind a lightweight FastAPI service.",
-      problem: "Smallholder farmers often lack fast access to agronomists, so crop diseases get spotted too late.",
-      solution: "A CNN trained on public plant-village imagery serves predictions through a REST API, with a React front end that works on low-bandwidth connections.",
+      problem:
+        "Smallholder farmers often lack fast access to agronomists, so crop diseases get spotted too late.",
+      solution:
+        "A CNN trained on public plant-village imagery serves predictions through a REST API, with a React front end that works on low-bandwidth connections.",
       technologies: ["Python", "PyTorch", "FastAPI", "React"],
       repoUrl: "https://github.com",
       demoUrl: "https://example.com",
@@ -101,8 +99,10 @@ export async function insertSampleData(ctx: MutationCtx) {
       title: "TransitPulse",
       summary:
         "A real-time city transit dashboard that blends live vehicle feeds with delay analytics so riders can see crowding and reliability at a glance.",
-      problem: "Static transit schedules hide live delays and crowdedness, so riders make poor route choices.",
-      solution: "Streaming GTFS updates are normalised in Node, stored in PostgreSQL, and rendered as an interactive Mapbox dashboard with per-route reliability trends.",
+      problem:
+        "Static transit schedules hide live delays and crowdedness, so riders make poor route choices.",
+      solution:
+        "Streaming GTFS updates are normalised in Node, stored in PostgreSQL, and rendered as an interactive Mapbox dashboard with per-route reliability trends.",
       technologies: ["TypeScript", "React", "Node.js", "PostgreSQL"],
       repoUrl: "https://github.com",
       status: "live",
@@ -111,9 +111,12 @@ export async function insertSampleData(ctx: MutationCtx) {
     },
     {
       title: "StudySphere",
-      summary: "Collaborative study rooms with shared notes, focus timers, and spaced-repetition quizzes for student groups.",
-      problem: "Study groups struggle to coordinate sessions and share notes across scattered tools.",
-      solution: "WebSockets power live shared notes and timers, with quiz progress stored per room and a clean, keyboard-first interface designed in Figma.",
+      summary:
+        "Collaborative study rooms with shared notes, focus timers, and spaced-repetition quizzes for student groups.",
+      problem:
+        "Study groups struggle to coordinate sessions and share notes across scattered tools.",
+      solution:
+        "WebSockets power live shared notes and timers, with quiz progress stored per room and a clean, keyboard-first interface designed in Figma.",
       technologies: ["React", "Node.js", "WebSockets", "Figma"],
       repoUrl: "https://github.com",
       status: "building",
@@ -144,7 +147,13 @@ export async function insertSampleData(ctx: MutationCtx) {
 
   const achievements: Array<{
     title: string;
-    kind: "hackathon" | "certificate" | "award" | "internship" | "course" | "milestone";
+    kind:
+      | "hackathon"
+      | "certificate"
+      | "award"
+      | "internship"
+      | "course"
+      | "milestone";
     issuer: string;
     occurredAt: number;
     description: string;
@@ -155,15 +164,17 @@ export async function insertSampleData(ctx: MutationCtx) {
     skillLinks: string[];
   }> = [
     {
-      title: "Winner — AgriTech track, IndiaHack 2025",
+      title: "Winner - AgriTech track, IndiaHack 2025",
       kind: "hackathon",
       issuer: "IndiaHack",
       occurredAt: now - 120 * day,
-      description: "Built CropSense in 36 hours with a team of four; won the AgriTech track for offline-first design.",
+      description:
+        "Built CropSense in 36 hours with a team of four; won the AgriTech track for offline-first design.",
       evidenceLabel: "Hackathon devpost page",
       evidenceUrl: "https://devpost.com",
       verification: "self_reported",
-      verificationNote: "Award listed by the organiser; no third-party check performed by LinkSphere.",
+      verificationNote:
+        "Award listed by the organiser; no third-party check performed by LinkSphere.",
       skillLinks: ["Python", "PyTorch"],
     },
     {
@@ -171,7 +182,8 @@ export async function insertSampleData(ctx: MutationCtx) {
       kind: "certificate",
       issuer: "DeepLearning.AI",
       occurredAt: now - 210 * day,
-      description: "Completed the five-course specialization covering CNNs, sequence models, and optimization.",
+      description:
+        "Completed the five-course specialization covering CNNs, sequence models, and optimization.",
       evidenceLabel: "Certificate credential link",
       evidenceUrl: "https://www.coursera.org",
       verification: "pending",
@@ -183,7 +195,8 @@ export async function insertSampleData(ctx: MutationCtx) {
       kind: "internship",
       issuer: "Finlytics (startup)",
       occurredAt: now - 300 * day,
-      description: "Shipped internal React dashboards and a FastAPI reporting service used by the analytics team.",
+      description:
+        "Shipped internal React dashboards and a FastAPI reporting service used by the analytics team.",
       evidenceLabel: "Internship offer letter (on request)",
       evidenceUrl: "https://www.linkedin.com",
       verification: "self_reported",
@@ -226,7 +239,13 @@ export async function insertSampleData(ctx: MutationCtx) {
       issuer: a.issuer,
       occurredAt: a.occurredAt,
       description: a.description,
-      evidence: [{ id: `ev-${a.title.slice(0, 8)}`, label: a.evidenceLabel, url: a.evidenceUrl }],
+      evidence: [
+        {
+          id: `ev-${a.title.slice(0, 8)}`,
+          label: a.evidenceLabel,
+          url: a.evidenceUrl,
+        },
+      ],
       verification: a.verification,
       verificationNote: a.verificationNote,
       skillLinks: a.skillLinks,
@@ -239,10 +258,7 @@ export async function insertSampleData(ctx: MutationCtx) {
   return profileId;
 }
 
-/**
- * Proof-of-Skill sample challenges. Every sample entry is self-submitted — no
- * sample result is ever labelled platform-verified.
- */
+/** Sample challenges. All self-submitted, none labelled platform-verified. */
 const SAMPLE_CHALLENGES: Array<{
   title: string;
   kind: "coding" | "design" | "problem_solving";
@@ -256,7 +272,7 @@ const SAMPLE_CHALLENGES: Array<{
   skillLinks: string[];
 }> = [
   {
-    title: "Two Sum — hash map solution",
+    title: "Two Sum - hash map solution",
     kind: "coding",
     platform: "LeetCode",
     difficulty: "Easy",
@@ -269,7 +285,7 @@ const SAMPLE_CHALLENGES: Array<{
     skillLinks: ["Python"],
   },
   {
-    title: "Transit stop finder — design sprint",
+    title: "Transit stop finder - design sprint",
     kind: "design",
     platform: "Self-run sprint",
     difficulty: "Intermediate",
@@ -299,11 +315,15 @@ async function insertSampleChallenges(
       submissionUrl: c.submissionUrl,
       outcome: c.outcome,
       evidence: [
-        { id: `cev-${c.title.slice(0, 8)}`, label: c.evidenceLabel, url: c.evidenceUrl },
+        {
+          id: `cev-${c.title.slice(0, 8)}`,
+          label: c.evidenceLabel,
+          url: c.evidenceUrl,
+        },
       ],
       provenance: "user_submitted",
       provenanceNote:
-        "Self-submitted sample data — LinkSphere has not independently verified this result.",
+        "Self-submitted sample data - LinkSphere has not independently verified this result.",
       skillLinks: c.skillLinks,
       published: true,
       createdAt: now,
@@ -313,9 +333,8 @@ async function insertSampleChallenges(
 }
 
 /**
- * Keeps the demo profile current as new sample sections ship: it tops up
- * missing sample pieces (challenges, team-finder opt-in) without touching
- * anything the demo does not own.
+ * Tops up sample sections added after the demo profile was created, without
+ * touching anything else on the row.
  */
 async function topUpSample(ctx: MutationCtx, profileId: Id<"profiles">) {
   const profile = await ctx.db.get(profileId);
@@ -330,9 +349,9 @@ async function topUpSample(ctx: MutationCtx, profileId: Id<"profiles">) {
     await insertSampleChallenges(ctx, profileId, now);
   }
 
-  // A fixed-token sample share link so the tailored-view feature is
-  // demonstrable from the sample profile. It only ever narrows what the sample
-  // profile already shows publicly, and is clearly labelled as sample data.
+  // A fixed-token share link for the demo, so the tailored-view feature can be
+  // tried without an account. It only narrows what the sample profile already
+  // shows publicly.
   const shareLinks = await ctx.db
     .query("shareLinks")
     .withIndex("by_profile", (q) => q.eq("profileId", profileId))
@@ -360,8 +379,12 @@ async function topUpSample(ctx: MutationCtx, profileId: Id<"profiles">) {
   const patch: Record<string, unknown> = {};
   if (profile.openToTeams !== true) {
     patch.openToTeams = true;
-    patch.teamAvailability = "Weekends · Aug–Oct 2026";
-    patch.teamLookingFor = ["UI/UX design", "Mobile development", "Data analysis"];
+    patch.teamAvailability = "Weekends · Aug-Oct 2026";
+    patch.teamLookingFor = [
+      "UI/UX design",
+      "Mobile development",
+      "Data analysis",
+    ];
     patch.contactPolicy = "signed_in_members";
   }
   if (profile.visibility.challenges === undefined) {

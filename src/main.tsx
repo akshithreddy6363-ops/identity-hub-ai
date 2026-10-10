@@ -1,4 +1,4 @@
-import '@vly-ai/integrations';
+import "@vly-ai/integrations";
 import { Toaster } from "@/components/ui/sonner";
 import { RequireAuth } from "@/components/RequireAuth";
 import { VlyToolbar } from "../vly-toolbar-readonly.tsx";
@@ -7,7 +7,13 @@ import { ConvexReactClient } from "convex/react";
 import { ThemeProvider } from "next-themes";
 import React, { StrictMode, useEffect, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Route, Routes, useLocation, useParams } from "react-router";
+import {
+  BrowserRouter,
+  Route,
+  Routes,
+  useLocation,
+  useParams,
+} from "react-router";
 import "./index.css";
 
 // Lazy load route components for better code splitting
@@ -53,7 +59,7 @@ function SharedProfileRoute() {
   return <SharedProfile token={token ?? ""} />;
 }
 
-/** Silent error boundary — if VlyToolbar crashes it renders nothing instead of
+/** Silent error boundary - if VlyToolbar crashes it renders nothing instead of
  *  crashing the whole app (e.g. hook errors in the browser runtime). */
 class ToolbarErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -111,8 +117,6 @@ class RootErrorBoundary extends React.Component<
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
-
-
 function RouteSyncer() {
   const location = useLocation();
   useEffect(() => {
@@ -135,7 +139,6 @@ function RouteSyncer() {
 
   return null;
 }
-
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -169,8 +172,14 @@ createRoot(document.getElementById("root")!).render(
                   }
                 >
                   <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/dashboard/profile" element={<ProfileEditor />} />
-                  <Route path="/dashboard/projects" element={<ProjectsPage />} />
+                  <Route
+                    path="/dashboard/profile"
+                    element={<ProfileEditor />}
+                  />
+                  <Route
+                    path="/dashboard/projects"
+                    element={<ProjectsPage />}
+                  />
                   <Route
                     path="/dashboard/achievements"
                     element={<AchievementsPage />}
@@ -191,7 +200,10 @@ createRoot(document.getElementById("root")!).render(
                     path="/dashboard/matcher"
                     element={<OpportunityMatcherPage />}
                   />
-                  <Route path="/dashboard/settings" element={<SettingsPage />} />
+                  <Route
+                    path="/dashboard/settings"
+                    element={<SettingsPage />}
+                  />
                 </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>

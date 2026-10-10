@@ -54,8 +54,8 @@ export const ACHIEVEMENT_KIND_META: Record<AchievementKind, string> = {
 export type Verification = "verified" | "pending" | "self_reported";
 
 /**
- * Verified is a real claim — the UI copy makes clear it must come from an
- * actual verification, and the app never assigns it automatically.
+ * "Verified" is a real claim: it has to come from an actual verification, never
+ * from us.
  */
 export const VERIFICATION_META: Record<
   Verification,
@@ -63,12 +63,14 @@ export const VERIFICATION_META: Record<
 > = {
   verified: {
     label: "Verified",
-    badge: "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    badge:
+      "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
     hint: "Confirmed through a reliable verification method (issuer check, credential ID, or trusted document).",
   },
   pending: {
     label: "Verification pending",
-    badge: "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    badge:
+      "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400",
     hint: "Evidence attached, verification not completed yet.",
   },
   self_reported: {
@@ -78,7 +80,7 @@ export const VERIFICATION_META: Record<
   },
 };
 
-/** Lowercase + trim so skill ↔ evidence matching is case-insensitive. */
+/** Lowercase and trim, so skill/evidence matching ignores case. */
 export function normalizeSkill(name: string): string {
   return name.trim().toLowerCase();
 }
@@ -111,8 +113,18 @@ export function initials(name: string): string {
 }
 
 const MONTHS = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
 ];
 
 /** Timestamp → "Mar 2025" (date inputs in the app send local timestamps). */
@@ -122,15 +134,12 @@ export function formatDate(ts: number): string {
 }
 
 /**
- * "live" = a real model call succeeded. "demo" = AI credentials were
- * unavailable and a clearly-labelled deterministic fallback produced the
- * output. The UI must surface this distinction everywhere.
+ * "live" = a real model call succeeded. "demo" = no credentials, so a
+ * deterministic fallback produced the output. The UI shows which one it was.
  */
 export type AIMode = "live" | "demo";
 
-/* ------------------------------------------------------------------ *
- * Proof-of-Skill challenges
- * ------------------------------------------------------------------ */
+// Proof-of-Skill challenges
 
 export type ChallengeKind = "coding" | "design" | "problem_solving";
 
@@ -153,14 +162,13 @@ export const PROVENANCE_META: Record<
   },
   platform_verified: {
     label: "Platform-verified",
-    badge: "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    badge:
+      "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
     hint: "Owner attached a platform result link. LinkSphere has not re-verified this result.",
   },
 };
 
-/* ------------------------------------------------------------------ *
- * Multilingual profiles
- * ------------------------------------------------------------------ */
+// Multilingual profiles
 
 export type Locale = "en" | "te" | "hi";
 
@@ -177,9 +185,7 @@ export const LOCALE_META: Record<
 export const TRANSLATABLE_LOCALES = ["te", "hi"] as const;
 export type TranslatableLocale = (typeof TRANSLATABLE_LOCALES)[number];
 
-/* ------------------------------------------------------------------ *
- * Smart Share Profiles
- * ------------------------------------------------------------------ */
+// Smart Share Profiles
 
 export type ShareAudience = "recruiter" | "mentor" | "collaborator" | "custom";
 
@@ -202,9 +208,7 @@ export const SHARE_AUDIENCE_META: Record<
   custom: { label: "Custom", note: "You choose every section." },
 };
 
-/* ------------------------------------------------------------------ *
- * AI Interview Mode
- * ------------------------------------------------------------------ */
+// Interview mode
 
 export type InterviewTrack = "recruiter" | "developer" | "student";
 
@@ -245,9 +249,7 @@ export interface InterviewResult {
   gaps: string[];
 }
 
-/* ------------------------------------------------------------------ *
- * Personalized skills roadmap
- * ------------------------------------------------------------------ */
+// Personalized skills roadmap
 
 export interface RoadmapPractice {
   kind: "project" | "practice" | "course";
@@ -269,12 +271,9 @@ export interface RoadmapResult {
   milestones: RoadmapMilestone[];
 }
 
-/**
- * Team Finder is deterministic matching, and the UI says exactly that — it is
- * never presented as an AI verdict.
- */
+/** Team Finder matching is deterministic, and the UI says so. */
 export const TEAM_FINDER_NOTE =
-  "Rule-based matching over published profiles — complementary skills and shared interests, not an AI judgement.";
+  "Rule-based matching over published profiles - complementary skills and shared interests, not an AI judgement.";
 
 export interface BioDraftInput {
   name: string;
@@ -303,34 +302,107 @@ export interface MatchResult {
 }
 
 export const AI_NOTES = {
-  bio:
-    "AI credentials unavailable — this draft was assembled from your profile fields with templates, not generated by a model.",
+  bio: "AI credentials unavailable - this draft was assembled from your profile fields with templates, not generated by a model.",
   project:
-    "AI credentials unavailable — this summary was cleaned up from your notes with templates, not generated by a model.",
-  twin: (
-    name: string,
-  ) => `AI credentials unavailable — this answer was keyword-matched from ${name}'s published profile, not written by a model.`,
+    "AI credentials unavailable - this summary was cleaned up from your notes with templates, not generated by a model.",
+  twin: (name: string) =>
+    `AI credentials unavailable - this answer was keyword-matched from ${name}'s published profile, not written by a model.`,
   match:
-    "AI credentials unavailable — this is a rule-based keyword comparison of the opportunity against your profile, not an AI analysis.",
+    "AI credentials unavailable - this is a rule-based keyword comparison of the opportunity against your profile, not an AI analysis.",
   interview: (name: string) =>
-    `AI credentials unavailable — these answers were extracted from ${name}'s published profile by rules, not written by a model.`,
+    `AI credentials unavailable - these answers were extracted from ${name}'s published profile by rules, not written by a model.`,
   roadmap:
-    "AI credentials unavailable — this roadmap was assembled from a built-in skill map and your published profile, not generated by a model.",
+    "AI credentials unavailable - this roadmap was assembled from a built-in skill map and your published profile, not generated by a model.",
   translation:
-    "AI credentials unavailable — translation needs a model, so the original English text is shown unchanged. Nothing was machine-translated.",
+    "AI credentials unavailable - translation needs a model, so the original English text is shown unchanged. Nothing was machine-translated.",
 } as const;
 
 /** Answer tokenization helper: lowercase words of 3+ chars without stopwords. */
 const STOPWORDS = new Set([
-  "the", "and", "for", "are", "but", "not", "you", "all", "can", "her", "was",
-  "one", "our", "out", "who", "get", "has", "him", "his", "how", "its", "new",
-  "now", "old", "see", "two", "way", "why", "does", "did", "what", "when",
-  "where", "which", "this", "that", "these", "those", "with", "from", "they",
-  "them", "than", "then", "have", "had", "about", "into", "over", "such",
-  "some", "any", "may", "should", "would", "could", "will", "shall", "been",
-  "being", "were", "very", "more", "also", "just", "like", "well", "much",
-  "many", "make", "made", "take", "tell", "use", "used", "using", "who",
-  "what", "s", "t", "re", "ve", "ll", "m",
+  "the",
+  "and",
+  "for",
+  "are",
+  "but",
+  "not",
+  "you",
+  "all",
+  "can",
+  "her",
+  "was",
+  "one",
+  "our",
+  "out",
+  "who",
+  "get",
+  "has",
+  "him",
+  "his",
+  "how",
+  "its",
+  "new",
+  "now",
+  "old",
+  "see",
+  "two",
+  "way",
+  "why",
+  "does",
+  "did",
+  "what",
+  "when",
+  "where",
+  "which",
+  "this",
+  "that",
+  "these",
+  "those",
+  "with",
+  "from",
+  "they",
+  "them",
+  "than",
+  "then",
+  "have",
+  "had",
+  "about",
+  "into",
+  "over",
+  "such",
+  "some",
+  "any",
+  "may",
+  "should",
+  "would",
+  "could",
+  "will",
+  "shall",
+  "been",
+  "being",
+  "were",
+  "very",
+  "more",
+  "also",
+  "just",
+  "like",
+  "well",
+  "much",
+  "many",
+  "make",
+  "made",
+  "take",
+  "tell",
+  "use",
+  "used",
+  "using",
+  "who",
+  "what",
+  "s",
+  "t",
+  "re",
+  "ve",
+  "ll",
+  "m",
 ]);
 
 export function tokenize(text: string): string[] {

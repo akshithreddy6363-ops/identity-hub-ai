@@ -3,9 +3,9 @@ import { v } from "convex/values";
 import { internalQuery } from "./_generated/server";
 
 /**
- * Server-only data loading for the AI actions (actions cannot read the
- * database directly). Internal — never callable from the client, so raw
- * profile documents (including private fields) never leave the backend.
+ * Server-only data loading for the AI actions, which can't query the database
+ * directly. These are internal functions, so raw profile documents never reach
+ * the client.
  */
 export const loadProfileBundle = internalQuery({
   args: { slug: v.string() },

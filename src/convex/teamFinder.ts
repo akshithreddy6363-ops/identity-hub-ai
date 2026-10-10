@@ -4,15 +4,12 @@ import { TEAM_FINDER_NOTE, normalizeSkill } from "../lib/linksphere";
 import { query } from "./_generated/server";
 
 /**
- * AI Team Finder (deterministic matching — labelled as such in the UI).
+ * Team Finder. Matching is deterministic, not an AI verdict, and the UI says so.
  *
- * Privacy model:
- *  - only signed-in members can call this at all (returns `null` otherwise);
- *  - only profiles that are PUBLISHED and explicitly opted in (`openToTeams`)
- *    are ever returned;
- *  - contact details are included only when the owner set
- *    `contactPolicy: "signed_in_members"` — explicit consent, revocable in
- *    Settings, and never shown to signed-out visitors.
+ * Only signed-in members can call this; signed-out callers get null. Only
+ * published profiles that set openToTeams are returned, and contact details
+ * appear only when the owner chose contactPolicy: "signed_in_members". That
+ * consent is revocable in Settings.
  */
 export const candidates = query({
   args: { skillFilter: v.optional(v.string()) },
@@ -90,7 +87,9 @@ export const candidates = query({
       });
     }
 
-    results.sort((a, b) => b.score - a.score || a.displayName.localeCompare(b.displayName));
+    results.sort(
+      (a, b) => b.score - a.score || a.displayName.localeCompare(b.displayName),
+    );
 
     return {
       note: TEAM_FINDER_NOTE,

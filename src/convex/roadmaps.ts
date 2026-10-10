@@ -5,7 +5,11 @@ import { resultModeValidator } from "./schema";
 import { mutation, query } from "./_generated/server";
 
 const practiceValidator = v.object({
-  kind: v.union(v.literal("project"), v.literal("practice"), v.literal("course")),
+  kind: v.union(
+    v.literal("project"),
+    v.literal("practice"),
+    v.literal("course"),
+  ),
   title: v.string(),
   detail: v.string(),
 });
@@ -58,7 +62,10 @@ export const save = mutation({
       targetRole,
       mode: args.mode,
       summary: args.summary.trim().slice(0, 1200),
-      gaps: args.gaps.map((g) => g.trim()).filter(Boolean).slice(0, 8),
+      gaps: args.gaps
+        .map((g) => g.trim())
+        .filter(Boolean)
+        .slice(0, 8),
       milestones: args.milestones.slice(0, 6),
       createdAt: Date.now(),
     });

@@ -1,17 +1,20 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
-import { buildPublicView, getProfileByOwner, requireMyProfile } from "./helpers";
+import {
+  buildPublicView,
+  getProfileByOwner,
+  requireMyProfile,
+} from "./helpers";
 import { shareAudienceValidator, visibilityValidator } from "./schema";
 import { mutation, query } from "./_generated/server";
 
 /**
  * Smart Share Profiles.
  *
- * A share link is a *narrowing* of a profile: its effective visibility is the
- * intersection of the profile's own public sections and the link's sections, so
- * a share link can never reveal something the public profile hides. Because of
- * that, token secrecy is a convenience rather than a security boundary —
- * everything reachable through a link is already public.
+ * A share link only narrows. Its effective visibility is the intersection of the
+ * profile's public sections and the link's own sections, so it can never expose
+ * something the public profile hides. The token is a convenience, not a security
+ * boundary, because everything reachable through a link is already public.
  */
 function token(): string {
   return Array.from({ length: 3 }, () =>
@@ -52,8 +55,10 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const profile = await requireMyProfile(ctx);
     const label = args.label.trim();
-    if (!label) throw new Error("Give this link a label so you can recognise it.");
-    if (label.length > 60) throw new Error("Label must be 60 characters or fewer.");
+    if (!label)
+      throw new Error("Give this link a label so you can recognise it.");
+    if (label.length > 60)
+      throw new Error("Label must be 60 characters or fewer.");
     if (!Object.values(args.sections).some(Boolean)) {
       throw new Error("Select at least one section to share.");
     }
@@ -86,7 +91,9 @@ export const update = mutation({
       throw new Error("Share link not found.");
     }
     await ctx.db.patch(id, {
-      ...(patch.label !== undefined ? { label: patch.label.trim().slice(0, 60) } : {}),
+      ...(patch.label !== undefined
+        ? { label: patch.label.trim().slice(0, 60) }
+        : {}),
       ...(patch.audience !== undefined ? { audience: patch.audience } : {}),
       ...(patch.sections !== undefined ? { sections: patch.sections } : {}),
       ...(patch.isActive !== undefined ? { isActive: patch.isActive } : {}),
@@ -106,9 +113,8 @@ export const remove = mutation({
 });
 
 /**
- * Public resolution of a share link. Returns null for unknown/revoked links or
- * unpublished profiles, and only ever serves the intersection of the link's
- * sections with the profile's own public sections.
+ * Resolves a share link for visitors. Returns null for unknown, revoked or
+ * unpublished links, and serves only sections the profile already exposes.
  */
 export const getSharedProfile = query({
   args: { token: v.string() },

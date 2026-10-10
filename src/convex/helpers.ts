@@ -36,7 +36,8 @@ export async function requireOwnedProfile(
   if (userId === null) throw new Error("You must be signed in.");
   const profile = await ctx.db.get(profileId);
   if (!profile) throw new Error("Profile not found.");
-  if (profile.ownerId !== userId) throw new Error("You do not own this profile.");
+  if (profile.ownerId !== userId)
+    throw new Error("You do not own this profile.");
   return profile;
 }
 
@@ -51,50 +52,47 @@ export function validateOptionalUrl(value: string | undefined, field: string) {
 The shape of a profile as the public (and the AI twin) may see it.
 Hidden sections come back as null / []. `null` means unpublished.
  */
-export type PublicView =
-  | {
-      slug: string;
-      displayName: string;
-      headline?: string;
-      avatarUrl?: string;
-      isSample: boolean;
-      twinEnabled: boolean;
-      about: {
-        bio?: string;
-        location?: string;
-        education?: string;
-        interests: string[];
-        goals?: string;
-      } | null;
-      skills: { id: string; name: string }[];
-      projects: Doc<"projects">[];
-      achievements: Doc<"achievements">[];
-      challenges: Doc<"challenges">[];
-      /**
-       * Owner-reviewed translations of the prose fields. Only the public
-       * profile query attaches these — the AI twin reads English only, so the
-       * field is optional and absent everywhere else.
-       */
-      translations?: {
-        locale: "en" | "te" | "hi";
-        headline?: string;
-        bio?: string;
-        goals?: string;
-        education?: string;
-        interests: string[];
-        mode: "live" | "demo";
-      }[];
-      contact: {
-        socials: { id: string; platform: string; url: string }[];
-        resumeUrl?: string;
-      } | null;
-    }
-  | null;
+export type PublicView = {
+  slug: string;
+  displayName: string;
+  headline?: string;
+  avatarUrl?: string;
+  isSample: boolean;
+  twinEnabled: boolean;
+  about: {
+    bio?: string;
+    location?: string;
+    education?: string;
+    interests: string[];
+    goals?: string;
+  } | null;
+  skills: { id: string; name: string }[];
+  projects: Doc<"projects">[];
+  achievements: Doc<"achievements">[];
+  challenges: Doc<"challenges">[];
+  /**
+   *Owner-reviewed translations of the prose fields. Only the public
+   * profile query attaches these; the twin reads English only, so the field is
+   * absent everywhere else.
+   */
+  translations?: {
+    locale: "en" | "te" | "hi";
+    headline?: string;
+    bio?: string;
+    goals?: string;
+    education?: string;
+    interests: string[];
+    mode: "live" | "demo";
+  }[];
+  contact: {
+    socials: { id: string; platform: string; url: string }[];
+    resumeUrl?: string;
+  } | null;
+} | null;
 
 /**
- * Single source of truth for "what is public": used by the public profile
- * query AND the AI Personal Twin, so the twin can never see more than a
- * visitor can.
+ * Single source of truth for what is public, shared by the public profile query
+ * and the twin, so neither can see more than a visitor can.
  */
 export function buildPublicView(
   profile: Doc<"profiles">,
@@ -102,8 +100,8 @@ export function buildPublicView(
   achievements: Doc<"achievements">[],
   challenges: Doc<"challenges">[] = [],
   /**
-   * Optional section override used by Smart Share Profiles. Callers must pass
-   * an INTERSECTION with the profile's own visibility — never a widening.
+   * Optional section override used by Smart Share Profiles. Callers must pass an
+   * intersection with the profile's own visibility, never a widening.
    */
   sectionsOverride?: {
     about: boolean;
@@ -117,7 +115,7 @@ export function buildPublicView(
   if (!profile.published) return null;
   const vis = sectionsOverride ?? profile.visibility;
   // `challenges` may be missing on profiles stored before the Proof-of-Skill
-  // feature shipped — treat "not explicitly hidden" as visible.
+  // feature shipped - treat "not explicitly hidden" as visible.
   const showChallenges = vis.challenges !== false;
   return {
     slug: profile.slug,

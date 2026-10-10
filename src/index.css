@@ -42,7 +42,7 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* Modern theme — quiet neutrals, ink-navy darks, one refined indigo accent. */
+/* Modern theme - quiet neutrals, ink-navy darks, one refined indigo accent. */
 :root {
   --radius: 0.625rem;
   --background: oklch(0.985 0.002 260);
@@ -122,7 +122,12 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    font-family:
+      "Inter",
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
       sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
