@@ -22,6 +22,7 @@ export const visibilityValidator = v.object({
   skills: v.boolean(),
   projects: v.boolean(),
   achievements: v.boolean(),
+  challenges: v.boolean(),
   contact: v.boolean(),
 });
 export type Visibility = Infer<typeof visibilityValidator>;
@@ -71,6 +72,51 @@ export const verificationValidator = v.union(
 );
 export type Verification = Infer<typeof verificationValidator>;
 
+/** Proof-of-Skill challenge provenance — never upgraded without real verification. */
+export const challengeKindValidator = v.union(
+  v.literal("coding"),
+  v.literal("design"),
+  v.literal("problem_solving"),
+);
+export const provenanceValidator = v.union(
+  v.literal("user_submitted"),
+  v.literal("platform_verified"),
+);
+export type Provenance = Infer<typeof provenanceValidator>;
+
+export const LOCALES = ["en", "te", "hi"] as const;
+export const localeValidator = v.union(
+  v.literal("en"),
+  v.literal("te"),
+  v.literal("hi"),
+);
+export type Locale = Infer<typeof localeValidator>;
+
+export const shareAudienceValidator = v.union(
+  v.literal("recruiter"),
+  v.literal("mentor"),
+  v.literal("collaborator"),
+  v.literal("custom"),
+);
+export type ShareAudience = Infer<typeof shareAudienceValidator>;
+
+/** How an AI/tool result was produced — surfaced in the UI everywhere. */
+export const resultModeValidator = v.union(v.literal("live"), v.literal("demo"));
+
+const practiceValidator = v.object({
+  kind: v.union(v.literal("project"), v.literal("practice"), v.literal("course")),
+  title: v.string(),
+  detail: v.string(),
+});
+
+const milestoneValidator = v.object({
+  title: v.string(),
+  focus: v.string(),
+  why: v.string(),
+  skills: v.array(v.string()),
+  practices: v.array(practiceValidator),
+});
+
 const schema = defineSchema(
   {
     // default auth tables using convex auth.
@@ -86,6 +132,104 @@ const schema = defineSchema(
 
       role: v.optional(roleValidator), // role of the user. do not remove
     }).index("email", ["email"]), // index for the email. do not remove or modify
+
+    /**
+     * Proof-of-Skill challenges attached to a profile. `provenance` is
+     * "platform_verified" only when the owner attached a real platform result
+     * link; the UI always states that LinkSphere has not re-verified it.
+     */
+    challenges: defineTable({
+      profileId: v.id("profiles"),
+      title: v.string(),
+      kind: challengeKindValidator,
+      platform: v.optional(v.string()),
+      difficulty: v.optional(v.string()),
+      description: v.optional(v.string()),
+      submissionUrl: v.optional(v.string()),
+      outcome: v.optional(v.string()),
+      evidence: v.array(evidenceValidator),
+      provenance: provenanceValidator,
+      provenanceNote: v.optional(v.string()),
+      skillLinks: v.array(v.string()),
+      published: v.boolean(),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    }).index("by_profile", ["profileId"]),
+
+    /**
+     * Smart Share Profiles: a token URL with its own section visibility.
+     * Effective visibility is always the INTERSECTION with the profile's own
+     * public sections — a share link can never reveal more than the profile does.
+     */
+    shareLinks: defineTable({
+      profileId: v.id("profiles"),
+      token: v.string(),
+      label: v.string(),
+      audience: shareAudienceValidator,
+      sections: visibilityValidator,
+      isActive: v.boolean(),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    })
+      .index("by_profile", ["profileId"])
+      .index("by_token", ["token"]),
+
+    /** AI-generated, owner-reviewed translations of the prose profile fields. */
+    profileTranslations: defineTable({
+      profileId: v.id("profiles"),
+      locale: localeValidator,
+      headline: v.optional(v.string()),
+      bio: v.optional(v.string()),
+      goals: v.optional(v.string()),
+      education: v.optional(v.string()),
+      interests: v.array(v.string()),
+      mode: resultModeValidator,
+      reviewed: v.boolean(),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    }).index("by_profile_locale", ["profileId", "locale"]),
+
+    /** Latest personalized skills roadmap (persisted so it survives reloads). */
+    roadmaps: defineTable({
+      profileId: v.id("profiles"),
+      targetRole: v.string(),
+      mode: resultModeValidator,
+      summary: v.string(),
+      gaps: v.array(v.string()),
+      milestones: v.array(milestoneValidator),
+      createdAt: v.number(),
+    }).index("by_profile", ["profileId"]),
+
+    /**
+     * Living Portfolio integrations. Only public data is read (no external
+     * account credentials are ever stored); "simulated" means the sample
+     * fallback was used and is labelled as such in the UI.
+     */
+    integrations: defineTable({
+      profileId: v.id("profiles"),
+      provider: v.literal("github"),
+      status: v.union(
+        v.literal("connected"),
+        v.literal("simulated"),
+        v.literal("error"),
+      ),
+      handle: v.string(),
+      lastSyncedAt: v.optional(v.number()),
+      lastError: v.optional(v.string()),
+      items: v.array(
+        v.object({
+          externalId: v.string(),
+          name: v.string(),
+          description: v.string(),
+          url: v.string(),
+          language: v.string(),
+          stars: v.number(),
+          selected: v.boolean(),
+        }),
+      ),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    }).index("by_profile", ["profileId"]),
 
     /** One identity hub per account. ownerId is optional only for the seeded sample profile. */
     profiles: defineTable({
@@ -108,6 +252,17 @@ const schema = defineSchema(
       visibility: visibilityValidator,
       twinEnabled: v.boolean(),
       twinIntro: v.optional(v.string()),
+      /** Team Finder opt-in. Optional so profiles created earlier still validate. */
+      openToTeams: v.optional(v.boolean()),
+      teamAvailability: v.optional(v.string()),
+      teamLookingFor: v.optional(v.array(v.string())),
+      /**
+       * Consent for showing contact details to signed-in Team Finder members.
+       * "hidden" means contact details are never served to other members.
+       */
+      contactPolicy: v.optional(
+        v.union(v.literal("hidden"), v.literal("signed_in_members")),
+      ),
       createdAt: v.number(),
       updatedAt: v.number(),
     })
@@ -129,6 +284,10 @@ const schema = defineSchema(
       skillLinks: v.array(v.string()),
       published: v.boolean(),
       order: v.number(),
+      /** Set when the project was imported from an external provider. */
+      sourceProvider: v.optional(v.string()),
+      sourceExternalId: v.optional(v.string()),
+      sourceUpdatedAt: v.optional(v.number()),
       createdAt: v.number(),
       updatedAt: v.number(),
     }).index("by_profile", ["profileId"]),

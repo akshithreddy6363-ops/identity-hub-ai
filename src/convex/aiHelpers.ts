@@ -8,8 +8,17 @@
 import {
   ACHIEVEMENT_KIND_META,
   type BioDraftInput,
+  type InterviewAnswer,
+  type InterviewEvidence,
+  type InterviewResult,
+  type InterviewTrack,
+  LOCALE_META,
+  type Locale,
   type MatchResult,
   type ProjectSummaryInput,
+  type RoadmapPractice,
+  type RoadmapMilestone,
+  type RoadmapResult,
   formatDate,
   normalizeSkill,
   tokenize,
@@ -445,6 +454,577 @@ export function demoMatch(
     suggestions: suggestions.slice(0, 6),
     highlights: highlights.slice(0, 5),
   };
+}
+
+/* ------------------------------------------------------------------ *
+ * AI Interview Mode
+ * ------------------------------------------------------------------ */
+
+const INTERVIEW_BANK: Record<InterviewTrack, string[]> = {
+  recruiter: [
+    "What is this person's strongest evidence-backed skill set?",
+    "Which projects best show they can deliver real, working output?",
+    "What achievements support the claims on this profile?",
+    "What should a recruiter ask about because it is not published here?",
+  ],
+  developer: [
+    "Which technologies have they actually used in published projects?",
+    "Which project is the most technically substantial, and why?",
+    "Which achievements or certificates back their technical skills?",
+    "What technical evidence is missing from this profile?",
+  ],
+  student: [
+    "What are they studying or learning right now?",
+    "Which hackathons, competitions or courses have they taken part in?",
+    "What skills are they actively building?",
+    "What is not on this profile yet?",
+  ],
+};
+
+export function interviewQuestions(track: InterviewTrack): string[] {
+  return [...INTERVIEW_BANK[track]];
+}
+
+const GAP_QUESTION = /miss|not published|not on this profile|gap/i;
+
+/** Every skill-linked item across projects, achievements and challenges. */
+function skillHasEvidence(view: NonNullable<PublicView>, skill: string): boolean {
+  const target = normalizeSkill(skill);
+  return (
+    view.projects.some(
+      (p) =>
+        p.skillLinks.some((s) => normalizeSkill(s) === target) ||
+        p.technologies.some((t) => normalizeSkill(t) === target),
+    ) ||
+    view.achievements.some((a) =>
+      a.skillLinks.some((s) => normalizeSkill(s) === target),
+    ) ||
+    view.challenges.some((c) =>
+      c.skillLinks.some((s) => normalizeSkill(s) === target),
+    )
+  );
+}
+
+/**
+ * Deterministic "what is missing" list. Computed locally from published data,
+ * never produced by the model — this is the honest answer to "what isn't
+ * published yet?"
+ */
+export function computeProfileGaps(view: PublicView): string[] {
+  if (!view) return [];
+  const gaps: string[] = [];
+  if (!view.about?.bio) gaps.push("No bio is published.");
+  if (!view.about?.goals) gaps.push("No professional goal is stated.");
+  if (!view.about?.education) gaps.push("No education information is published.");
+  if (view.skills.length === 0) gaps.push("No skills are listed.");
+  const unevidenced = view.skills
+    .filter((s) => !skillHasEvidence(view, s.name))
+    .map((s) => s.name);
+  if (unevidenced.length > 0) {
+    gaps.push(
+      `Skills with no linked evidence yet: ${unevidenced.slice(0, 5).join(", ")}${unevidenced.length > 5 ? ", …" : ""}.`,
+    );
+  }
+  if (view.projects.length === 0) {
+    gaps.push("No projects are published.");
+  } else {
+    const noDemo = view.projects.filter((p) => !p.demoUrl).length;
+    if (noDemo > 0)
+      gaps.push(
+        `${noDemo} published project${noDemo === 1 ? " has" : "s lack"} no live demo link.`,
+      );
+    if (!view.projects.some((p) => p.repoUrl))
+      gaps.push("No repository link is attached to any published project.");
+  }
+  if (view.achievements.length === 0) {
+    gaps.push("No achievements are published yet.");
+  } else {
+    const noEvidence = view.achievements.filter((a) => a.evidence.length === 0).length;
+    if (noEvidence > 0)
+      gaps.push(
+        `${noEvidence} passport entr${noEvidence === 1 ? "y has" : "ies have"} no supporting evidence attached.`,
+      );
+  }
+  if (view.challenges.length === 0)
+    gaps.push("No proof-of-skill challenges are attached.");
+  if (view.contact && !view.contact.resumeUrl)
+    gaps.push("No resume link is published.");
+  if (view.contact && view.contact.socials.length === 0)
+    gaps.push("No contact links are published.");
+  return gaps.slice(0, 7);
+}
+
+/**
+ * Resolves model-suggested evidence names against the REAL published items.
+ * Anything that does not match an existing item is dropped, so the interview
+ * can never cite invented proof.
+ */
+export function resolveEvidence(
+  view: PublicView,
+  titles: string[],
+): InterviewEvidence[] {
+  if (!view) return [];
+  const out: InterviewEvidence[] = [];
+  const seen = new Set<string>();
+  for (const raw of titles) {
+    const needle = raw.trim().toLowerCase();
+    if (!needle) continue;
+    const loosely = (candidate: string) => {
+      const c = candidate.toLowerCase();
+      return c === needle || c.includes(needle) || needle.includes(c);
+    };
+    const project = view.projects.find((p) => loosely(p.title));
+    if (project) {
+      const key = `project:${project._id}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        out.push({
+          kind: "project",
+          title: project.title,
+          url: project.demoUrl ?? project.repoUrl,
+        });
+      }
+      continue;
+    }
+    const achievement = view.achievements.find((a) => loosely(a.title));
+    if (achievement) {
+      const key = `achievement:${achievement._id}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        out.push({
+          kind: "achievement",
+          title: achievement.title,
+          url: achievement.evidence[0]?.url,
+        });
+      }
+      continue;
+    }
+    const challenge = view.challenges.find((c) => loosely(c.title));
+    if (challenge) {
+      const key = `challenge:${challenge._id}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        out.push({
+          kind: "challenge",
+          title: challenge.title,
+          url: challenge.submissionUrl ?? challenge.evidence[0]?.url,
+        });
+      }
+    }
+  }
+  return out.slice(0, 4);
+}
+
+export function interviewSystemPrompt(view: PublicView): string {
+  if (!view) return "";
+  return [
+    `You are running a structured interview about ${view.displayName}'s PUBLIC profile on LinkSphere AI.`,
+    "Answer each question using ONLY the PROFILE CONTEXT. Return ONLY valid JSON, no markdown fences:",
+    '{"answers": [{"question": string, "answer": string, "answered": boolean, "evidenceTitles": string[]}]}',
+    "Rules:",
+    "- evidenceTitles must list the exact titles of projects, achievements or challenges from the context that support the answer (empty array if none). Never invent titles.",
+    "- If the context does not contain the answer, set answered=false and say plainly that it is not published on this profile. Never guess, never claim unverified things.",
+    "- One question may ask what is missing: answer it from the MISSING INFORMATION list only.",
+    "- 1-3 sentences per answer, plain text.",
+  ].join("\n");
+}
+
+export function interviewUserPrompt(
+  questions: string[],
+  context: string,
+  gaps: string[],
+): string {
+  return [
+    "QUESTIONS:",
+    ...questions.map((q, i) => `${i + 1}. ${q}`),
+    "",
+    "PROFILE CONTEXT:",
+    context,
+    "",
+    "MISSING INFORMATION (computed from the profile, not by you):",
+    gaps.length ? gaps.map((g) => `- ${g}`).join("\n") : "- none detected",
+    "",
+    "Return the JSON now, one entry per question in the same order.",
+  ].join("\n");
+}
+
+/** Rule-based interview used when no model is reachable (labelled demo mode). */
+export function demoInterview(
+  track: InterviewTrack,
+  view: NonNullable<PublicView>,
+): InterviewResult {
+  const gaps = computeProfileGaps(view);
+  const answers: InterviewAnswer[] = interviewQuestions(track).map((question) => {
+    if (GAP_QUESTION.test(question)) {
+      return {
+        question,
+        answered: true,
+        answer:
+          gaps.length > 0
+            ? `Not published on this profile yet: ${gaps.join(" ")}`
+            : "Everything this check looks for is present on the profile.",
+        evidence: [],
+      };
+    }
+    const answer = demoTwinAnswer(question, view);
+    const notPublished = answer.startsWith("I don't have that information");
+    const tokens = tokenize(question);
+    const titles = [
+      ...view.projects.map((p) => p.title),
+      ...view.achievements.map((a) => a.title),
+      ...view.challenges.map((c) => c.title),
+    ].filter((title) =>
+      tokens.some((token) => title.toLowerCase().includes(token)),
+    );
+    const evidence = resolveEvidence(view, titles);
+    return {
+      question,
+      answered: !notPublished,
+      answer: notPublished
+        ? "I don't have that information on this profile yet — it isn't published here."
+        : answer,
+      evidence: notPublished ? [] : evidence,
+    };
+  });
+  return { answers, gaps };
+}
+
+export function parseInterviewJson(
+  text: string,
+  view: PublicView,
+  questions: string[],
+  gaps: string[],
+): InterviewResult | null {
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  const raw = fenced ? fenced[1] : text;
+  const start = raw.indexOf("{");
+  const end = raw.lastIndexOf("}");
+  if (start === -1 || end <= start) return null;
+  try {
+    const parsed = JSON.parse(raw.slice(start, end + 1)) as {
+      answers?: unknown;
+    };
+    const rawAnswers: unknown = parsed.answers;
+    if (!Array.isArray(rawAnswers)) return null;
+    const byQuestion = new Map<string, Record<string, unknown>>();
+    for (const item of rawAnswers as unknown[]) {
+      const entry = item as Record<string, unknown>;
+      const q = typeof entry?.question === "string" ? entry.question : "";
+      if (q) byQuestion.set(q.trim().toLowerCase(), entry);
+    }
+    const answers: InterviewAnswer[] = questions.map((question, index) => {
+      const entry =
+        byQuestion.get(question.trim().toLowerCase()) ??
+        ((rawAnswers as unknown[])[index] as Record<string, unknown> | undefined);
+      const answerText =
+        typeof entry?.answer === "string" ? entry.answer.trim() : "";
+      const titles = Array.isArray(entry?.evidenceTitles)
+        ? entry.evidenceTitles.filter((t): t is string => typeof t === "string")
+        : [];
+      const notPublished =
+        !answerText || /not (published|available|listed|on this profile)/i.test(answerText);
+      return {
+        question,
+        answered: !notPublished,
+        answer: notPublished
+          ? "I don't have that information on this profile yet — it isn't published here."
+          : answerText,
+        // Evidence is resolved against real items, so nothing can be invented.
+        evidence: notPublished ? [] : resolveEvidence(view, titles),
+      };
+    });
+    if (answers.every((a) => !a.answered)) return null;
+    return { answers, gaps };
+  } catch {
+    return null;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Personalized skills roadmap
+ * ------------------------------------------------------------------ */
+
+export function roadmapSystemPrompt(): string {
+  return [
+    "You build a realistic, project-based learning roadmap for a student or early-career developer on LinkSphere AI.",
+    "Return ONLY valid JSON, no markdown fences:",
+    '{"summary": string, "gaps": string[], "milestones": [{"title": string, "focus": string, "why": string, "skills": string[], "practices": [{"kind": "project"|"practice"|"course", "title": string, "detail": string}]}]}',
+    "Rules:",
+    "- 3 or 4 milestones, ordered from foundation to proof-of-work; each with 1-3 practices.",
+    "- Build on what the person ALREADY has: reference their existing projects and skills in `why` and reuse them as stepping stones.",
+    "- gaps: skills the target role needs that are genuinely absent from the profile. Be honest; keep each one short.",
+    "- Practices must be concrete and doable in weeks, favouring small shipped projects over vague advice.",
+    "- Never promise jobs, salaries or outcomes. No invented courses with fake URLs.",
+  ].join("\n");
+}
+
+export function roadmapUserPrompt(targetRole: string, context: string): string {
+  return `TARGET ROLE:\n${targetRole}\n\nCURRENT PROFILE:\n${context}\n\nReturn the JSON now.`;
+}
+
+interface RoleCluster {
+  match: string[];
+  label: string;
+  core: string[];
+  firstProject: string;
+}
+
+const ROLE_CLUSTERS: RoleCluster[] = [
+  {
+    match: ["ai", "ml", "machine learning", "data scien", "deep learning"],
+    label: "applied AI / ML",
+    core: ["Python", "PyTorch or TensorFlow", "SQL", "model evaluation", "REST API deployment"],
+    firstProject: "an end-to-end model with a small web UI and an evaluation report",
+  },
+  {
+    match: ["front", "react", "web", "ui", "full stack", "fullstack"],
+    label: "frontend / full-stack",
+    core: ["TypeScript", "React", "accessibility", "testing", "performance"],
+    firstProject: "a small product with real user flows, keyboard access and tests",
+  },
+  {
+    match: ["back", "server", "api", "node", "platform", "systems"],
+    label: "backend / platform",
+    core: ["Node.js", "SQL", "auth", "caching", "observability"],
+    firstProject: "an authenticated API with migrations, rate limits and logs",
+  },
+  {
+    match: ["data", "analyst", "analytics", "bi", "reporting"],
+    label: "data analysis",
+    core: ["SQL", "Python", "statistics", "visualisation", "data cleaning"],
+    firstProject: "a public dataset analysis with a reproducible notebook and a one-page summary",
+  },
+  {
+    match: ["mobile", "android", "ios", "flutter", "app"],
+    label: "mobile",
+    core: ["React Native or Flutter", "offline storage", "REST APIs", "app store release"],
+    firstProject: "an app shipped to a real device with offline support",
+  },
+  {
+    match: ["design", "ux", "product design", "ui/ux"],
+    label: "product design",
+    core: ["Figma", "user research", "design systems", "prototyping", "handoff"],
+    firstProject: "a redesign case study with research notes and before/after evidence",
+  },
+  {
+    match: ["devops", "cloud", "sre", "infrastructure"],
+    label: "cloud / DevOps",
+    core: ["Docker", "CI/CD", "infrastructure as code", "monitoring", "Linux"],
+    firstProject: "a deployed service with automated tests, pipeline and alerts",
+  },
+];
+
+const GENERIC_CLUSTER: RoleCluster = {
+  match: [],
+  label: "software engineering",
+  core: ["one language deeply", "Git workflows", "testing", "data structures", "system design basics"],
+  firstProject: "a small tool you use yourself, with tests and a README",
+};
+
+/** Deterministic roadmap when no model is reachable (labelled demo mode). */
+export function demoRoadmap(
+  view: PublicView,
+  targetRole: string,
+): RoadmapResult {
+  const role = targetRole.toLowerCase();
+  const cluster =
+    ROLE_CLUSTERS.find((c) => c.match.some((m) => role.includes(m))) ??
+    GENERIC_CLUSTER;
+
+  const owned = new Set<string>();
+  if (view) {
+    for (const skill of view.skills) owned.add(normalizeSkill(skill.name));
+    for (const project of view.projects) {
+      for (const tech of project.technologies) owned.add(normalizeSkill(tech));
+    }
+  }
+  const gaps = cluster.core.filter(
+    (skill) => !owned.has(normalizeSkill(skill)),
+  );
+  const strengths = cluster.core.filter((skill) => owned.has(normalizeSkill(skill)));
+  const projectTitles = (view?.projects ?? []).map((p) => p.title);
+  const existing = projectTitles.length
+    ? `Your existing work (${projectTitles.slice(0, 3).join(", ")}) already gives you a base to extend.`
+    : "You have not published a project yet, so the first milestone starts there.";
+
+  return {
+    summary: `A step-by-step path toward ${targetRole.trim() || cluster.label}. ${existing}${
+      strengths.length
+        ? ` You already cover ${strengths.slice(0, 3).join(", ")}, so the plan focuses on what is missing.`
+        : ""
+    }`,
+    gaps: gaps.slice(0, 5),
+    milestones: [
+      {
+        title: "Milestone 1 — Close the foundation gap",
+        focus: gaps[0] ?? cluster.core[0],
+        why: `This is the most common first filter for ${cluster.label} roles and it is not visible in your profile yet.`,
+        skills: gaps.slice(0, 2).length ? gaps.slice(0, 2) : cluster.core.slice(0, 2),
+        practices: [
+          {
+            kind: "course" as const,
+            title: `Focused fundamentals for ${gaps[0] ?? cluster.core[0]}`,
+            detail:
+              "Pick one reputable course or book and finish it end to end rather than sampling several.",
+          },
+          {
+            kind: "practice" as const,
+            title: "Build the smallest possible exercise set",
+            detail: `Write 5-10 small exercises using ${gaps[0] ?? cluster.core[0]} so the skill is applied, not just read.`,
+          },
+        ],
+      },
+      {
+        title: "Milestone 2 — Ship a portfolio project",
+        focus: cluster.firstProject,
+        why: `A single complete, published project answers more ${cluster.label} questions than a list of skills.`,
+        skills: cluster.core.slice(0, 3),
+        practices: [
+          {
+            kind: "project" as const,
+            title: `Build ${cluster.firstProject}`,
+            detail:
+              "Keep the scope to a few weeks. Publish it here with a live demo link, a repository and a short write-up of what you learned.",
+          },
+          {
+            kind: "practice" as const,
+            title: "Link the project to the skills it proves",
+            detail:
+              "Use the skill links on your project so each claim traces to real evidence on your profile.",
+          },
+        ],
+      },
+      {
+        title: "Milestone 3 — Prove it in public",
+        focus: "External validation",
+        why: "Competitions, contributions and shared work move you from self-reported to demonstrated.",
+        skills: cluster.core.slice(1, 4),
+        practices: [
+          {
+            kind: "practice" as const,
+            title: `Enter one ${cluster.label} competition or team project`,
+            detail:
+              "A hackathon or open-source contribution adds an Achievement Passport entry with a result you can attach evidence to.",
+          },
+          {
+            kind: "practice" as const,
+            title: "Attach evidence to your weakest entries",
+            detail:
+              "Use the gaps list on this page: add demo links, evidence links and a resume so nothing is left as an unevidenced claim.",
+          },
+        ],
+      },
+    ],
+  };
+}
+
+export function parseRoadmapJson(text: string): RoadmapResult | null {
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  const raw = fenced ? fenced[1] : text;
+  const start = raw.indexOf("{");
+  const end = raw.lastIndexOf("}");
+  if (start === -1 || end <= start) return null;
+  try {
+    const parsed = JSON.parse(raw.slice(start, end + 1)) as Record<string, unknown>;
+    const str = (value: unknown) => (typeof value === "string" ? value.trim() : "");
+    const milestones = (Array.isArray(parsed.milestones) ? parsed.milestones : [])
+      .slice(0, 5)
+      .map((raw): RoadmapMilestone => {
+        const m = raw as Record<string, unknown>;
+        return {
+          title: str(m.title),
+          focus: str(m.focus),
+          why: str(m.why),
+          skills: (Array.isArray(m.skills) ? m.skills : [])
+            .map(str)
+            .filter(Boolean)
+            .slice(0, 6),
+          practices: (Array.isArray(m.practices) ? m.practices : [])
+            .slice(0, 4)
+            .map((rawPractice): RoadmapPractice => {
+              const p = rawPractice as Record<string, unknown>;
+              const kind: RoadmapPractice["kind"] =
+                p.kind === "project" || p.kind === "course" ? p.kind : "practice";
+              return { kind, title: str(p.title), detail: str(p.detail) };
+            })
+            .filter((p) => p.title),
+        };
+      })
+      .filter((m) => m.title);
+    if (milestones.length === 0) return null;
+    return {
+      summary: str(parsed.summary),
+      gaps: (Array.isArray(parsed.gaps) ? parsed.gaps : [])
+        .map(str)
+        .filter(Boolean)
+        .slice(0, 6),
+      milestones,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Multilingual profiles
+ * ------------------------------------------------------------------ */
+
+export function translationSystemPrompt(locale: Locale): string {
+  return [
+    `You translate public profile text into ${LOCALE_META[locale].promptName} for LinkSphere AI.`,
+    "Return ONLY valid JSON with the same keys as the input:",
+    '{"headline": string, "bio": string, "goals": string, "education": string, "interests": string[]}',
+    "Rules:",
+    "- Translate meaning and tone faithfully. Add no new claims, credentials or details, and remove nothing.",
+    "- Keep technical terms, technology names, company names, project names, people's names and URLs exactly as written in Latin script.",
+    "- Keep the first-person voice for the bio.",
+    "- Use natural, everyday " + LOCALE_META[locale].promptName + " phrasing, not stilted literal translation.",
+    "- Empty input fields must stay empty strings.",
+  ].join("\n");
+}
+
+export function translationUserPrompt(fields: {
+  headline: string;
+  bio: string;
+  goals: string;
+  education: string;
+  interests: string[];
+}): string {
+  return JSON.stringify(fields, null, 2);
+}
+
+export function parseTranslationJson(
+  text: string,
+): {
+  headline: string;
+  bio: string;
+  goals: string;
+  education: string;
+  interests: string[];
+} | null {
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  const raw = fenced ? fenced[1] : text;
+  const start = raw.indexOf("{");
+  const end = raw.lastIndexOf("}");
+  if (start === -1 || end <= start) return null;
+  try {
+    const parsed = JSON.parse(raw.slice(start, end + 1)) as Record<string, unknown>;
+    const str = (value: unknown) => (typeof value === "string" ? value.trim() : "");
+    const result = {
+      headline: str(parsed.headline),
+      bio: str(parsed.bio),
+      goals: str(parsed.goals),
+      education: str(parsed.education),
+      interests: (Array.isArray(parsed.interests) ? parsed.interests : [])
+        .map(str)
+        .filter(Boolean)
+        .slice(0, 30),
+    };
+    if (!result.headline && !result.bio && !result.goals) return null;
+    return result;
+  } catch {
+    return null;
+  }
 }
 
 /* -------------------- JSON parsing for live matcher -------------------- */

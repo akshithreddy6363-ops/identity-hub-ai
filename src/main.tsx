@@ -18,6 +18,12 @@ const AppShell = lazy(() => import("@/components/layout/AppShell.tsx"));
 const ProfileEditor = lazy(() => import("./pages/ProfileEditor.tsx"));
 const ProjectsPage = lazy(() => import("./pages/ProjectsPage.tsx"));
 const AchievementsPage = lazy(() => import("./pages/AchievementsPage.tsx"));
+const ChallengesPage = lazy(() => import("./pages/ChallengesPage.tsx"));
+const RoadmapPage = lazy(() => import("./pages/RoadmapPage.tsx"));
+const TeamFinderPage = lazy(() => import("./pages/TeamFinderPage.tsx"));
+const ShareLinksPage = lazy(() => import("./pages/ShareLinksPage.tsx"));
+const IntegrationsPage = lazy(() => import("./pages/IntegrationsPage.tsx"));
+const SharedProfile = lazy(() => import("./pages/SharedProfile.tsx"));
 const AIStudio = lazy(() => import("./pages/AIStudio.tsx"));
 const OpportunityMatcherPage = lazy(
   () => import("./pages/OpportunityMatcherPage.tsx"),
@@ -39,6 +45,12 @@ function RouteLoading() {
 function PublicProfileRoute() {
   const { slug } = useParams();
   return <PublicProfile slug={slug ?? ""} />;
+}
+
+/** Renders a tailored Smart Share Profile for /s/:token */
+function SharedProfileRoute() {
+  const { token } = useParams();
+  return <SharedProfile token={token ?? ""} />;
 }
 
 /** Silent error boundary — if VlyToolbar crashes it renders nothing instead of
@@ -148,6 +160,7 @@ createRoot(document.getElementById("root")!).render(
                   element={<AuthPage redirectAfterAuth="/dashboard" />}
                 />
                 <Route path="/p/:slug" element={<PublicProfileRoute />} />
+                <Route path="/s/:token" element={<SharedProfileRoute />} />
                 <Route
                   element={
                     <RequireAuth redirectImmediately>
@@ -161,6 +174,17 @@ createRoot(document.getElementById("root")!).render(
                   <Route
                     path="/dashboard/achievements"
                     element={<AchievementsPage />}
+                  />
+                  <Route
+                    path="/dashboard/challenges"
+                    element={<ChallengesPage />}
+                  />
+                  <Route path="/dashboard/roadmap" element={<RoadmapPage />} />
+                  <Route path="/dashboard/team" element={<TeamFinderPage />} />
+                  <Route path="/dashboard/share" element={<ShareLinksPage />} />
+                  <Route
+                    path="/dashboard/integrations"
+                    element={<IntegrationsPage />}
                   />
                   <Route path="/dashboard/ai" element={<AIStudio />} />
                   <Route

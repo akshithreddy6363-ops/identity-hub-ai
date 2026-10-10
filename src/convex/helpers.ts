@@ -69,6 +69,21 @@ export type PublicView =
       skills: { id: string; name: string }[];
       projects: Doc<"projects">[];
       achievements: Doc<"achievements">[];
+      challenges: Doc<"challenges">[];
+      /**
+       * Owner-reviewed translations of the prose fields. Only the public
+       * profile query attaches these — the AI twin reads English only, so the
+       * field is optional and absent everywhere else.
+       */
+      translations?: {
+        locale: "en" | "te" | "hi";
+        headline?: string;
+        bio?: string;
+        goals?: string;
+        education?: string;
+        interests: string[];
+        mode: "live" | "demo";
+      }[];
       contact: {
         socials: { id: string; platform: string; url: string }[];
         resumeUrl?: string;
@@ -85,9 +100,25 @@ export function buildPublicView(
   profile: Doc<"profiles">,
   projects: Doc<"projects">[],
   achievements: Doc<"achievements">[],
+  challenges: Doc<"challenges">[] = [],
+  /**
+   * Optional section override used by Smart Share Profiles. Callers must pass
+   * an INTERSECTION with the profile's own visibility — never a widening.
+   */
+  sectionsOverride?: {
+    about: boolean;
+    skills: boolean;
+    projects: boolean;
+    achievements: boolean;
+    challenges: boolean;
+    contact: boolean;
+  },
 ): PublicView {
   if (!profile.published) return null;
-  const vis = profile.visibility;
+  const vis = sectionsOverride ?? profile.visibility;
+  // `challenges` may be missing on profiles stored before the Proof-of-Skill
+  // feature shipped — treat "not explicitly hidden" as visible.
+  const showChallenges = vis.challenges !== false;
   return {
     slug: profile.slug,
     displayName: profile.displayName,
@@ -114,6 +145,11 @@ export function buildPublicView(
       ? achievements
           .filter((a) => a.published)
           .sort((a, b) => b.occurredAt - a.occurredAt)
+      : [],
+    challenges: showChallenges
+      ? challenges
+          .filter((c) => c.published)
+          .sort((a, b) => b.createdAt - a.createdAt)
       : [],
     contact: vis.contact
       ? {

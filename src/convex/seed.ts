@@ -1,5 +1,6 @@
-import { SAMPLE_SLUG } from "../lib/linksphere";
+import { SAMPLE_SHARE_TOKEN, SAMPLE_SLUG } from "../lib/linksphere";
 import { mutation, type MutationCtx } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
 
 /**
  * Inserts the clearly-labelled demonstration profile (plus its sample
@@ -54,9 +55,17 @@ export async function insertSampleData(ctx: MutationCtx) {
       skills: true,
       projects: true,
       achievements: true,
+      challenges: true,
       contact: true,
     },
     twinEnabled: true,
+    // Opted in so the Team Finder demo has a real, clearly-labelled sample
+    // profile to match against. Contact details are shared with signed-in
+    // members only (and the sample's links are generic placeholders).
+    openToTeams: true,
+    teamAvailability: "Weekends · Aug–Oct 2026",
+    teamLookingFor: ["UI/UX design", "Mobile development", "Data analysis"],
+    contactPolicy: "signed_in_members",
     twinIntro:
       "Answer only from Aarav's published profile. Prefer concrete projects and achievements as evidence.",
     createdAt: now,
@@ -207,6 +216,8 @@ export async function insertSampleData(ctx: MutationCtx) {
     },
   ];
 
+  await insertSampleChallenges(ctx, profileId, now);
+
   for (const a of achievements) {
     await ctx.db.insert("achievements", {
       profileId,
@@ -229,8 +240,141 @@ export async function insertSampleData(ctx: MutationCtx) {
 }
 
 /**
+ * Proof-of-Skill sample challenges. Every sample entry is self-submitted — no
+ * sample result is ever labelled platform-verified.
+ */
+const SAMPLE_CHALLENGES: Array<{
+  title: string;
+  kind: "coding" | "design" | "problem_solving";
+  platform: string;
+  difficulty: string;
+  description: string;
+  submissionUrl: string;
+  outcome: string;
+  evidenceLabel: string;
+  evidenceUrl: string;
+  skillLinks: string[];
+}> = [
+  {
+    title: "Two Sum — hash map solution",
+    kind: "coding",
+    platform: "LeetCode",
+    difficulty: "Easy",
+    description:
+      "Practised the hash-map pattern: single pass, O(n) time, with a written note on why the brute-force O(n²) version is worse.",
+    submissionUrl: "https://leetcode.com",
+    outcome: "Accepted · 52 ms runtime",
+    evidenceLabel: "Submission profile",
+    evidenceUrl: "https://leetcode.com",
+    skillLinks: ["Python"],
+  },
+  {
+    title: "Transit stop finder — design sprint",
+    kind: "design",
+    platform: "Self-run sprint",
+    difficulty: "Intermediate",
+    description:
+      "Redesigned the stop-search flow for a transit app: three screens, one usability test with two riders, one measurable change (fewer taps to reach a departure time).",
+    submissionUrl: "https://www.figma.com",
+    outcome: "Prototype reviewed by two riders",
+    evidenceLabel: "Prototype walkthrough",
+    evidenceUrl: "https://www.figma.com",
+    skillLinks: ["Figma", "React"],
+  },
+];
+
+async function insertSampleChallenges(
+  ctx: MutationCtx,
+  profileId: Id<"profiles">,
+  now: number,
+) {
+  for (const c of SAMPLE_CHALLENGES) {
+    await ctx.db.insert("challenges", {
+      profileId,
+      title: c.title,
+      kind: c.kind,
+      platform: c.platform,
+      difficulty: c.difficulty,
+      description: c.description,
+      submissionUrl: c.submissionUrl,
+      outcome: c.outcome,
+      evidence: [
+        { id: `cev-${c.title.slice(0, 8)}`, label: c.evidenceLabel, url: c.evidenceUrl },
+      ],
+      provenance: "user_submitted",
+      provenanceNote:
+        "Self-submitted sample data — LinkSphere has not independently verified this result.",
+      skillLinks: c.skillLinks,
+      published: true,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+}
+
+/**
+ * Keeps the demo profile current as new sample sections ship: it tops up
+ * missing sample pieces (challenges, team-finder opt-in) without touching
+ * anything the demo does not own.
+ */
+async function topUpSample(ctx: MutationCtx, profileId: Id<"profiles">) {
+  const profile = await ctx.db.get(profileId);
+  if (!profile) return;
+  const now = Date.now();
+
+  const challenges = await ctx.db
+    .query("challenges")
+    .withIndex("by_profile", (q) => q.eq("profileId", profileId))
+    .collect();
+  if (challenges.length === 0) {
+    await insertSampleChallenges(ctx, profileId, now);
+  }
+
+  // A fixed-token sample share link so the tailored-view feature is
+  // demonstrable from the sample profile. It only ever narrows what the sample
+  // profile already shows publicly, and is clearly labelled as sample data.
+  const shareLinks = await ctx.db
+    .query("shareLinks")
+    .withIndex("by_profile", (q) => q.eq("profileId", profileId))
+    .collect();
+  if (shareLinks.length === 0) {
+    await ctx.db.insert("shareLinks", {
+      profileId,
+      token: SAMPLE_SHARE_TOKEN,
+      label: "Recruiter view (sample)",
+      audience: "recruiter",
+      sections: {
+        about: true,
+        skills: true,
+        projects: true,
+        achievements: true,
+        challenges: true,
+        contact: false,
+      },
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
+  const patch: Record<string, unknown> = {};
+  if (profile.openToTeams !== true) {
+    patch.openToTeams = true;
+    patch.teamAvailability = "Weekends · Aug–Oct 2026";
+    patch.teamLookingFor = ["UI/UX design", "Mobile development", "Data analysis"];
+    patch.contactPolicy = "signed_in_members";
+  }
+  if (profile.visibility.challenges === undefined) {
+    patch.visibility = { ...profile.visibility, challenges: true };
+  }
+  if (Object.keys(patch).length > 0) {
+    await ctx.db.patch(profileId, patch);
+  }
+}
+
+/**
  * Public, idempotent bootstrap for the demo profile. Frontend pages call this
- * on mount; it no-ops once the sample exists.
+ * on mount; it creates the sample once and tops it up afterwards.
  */
 export const ensureSample = mutation({
   args: {},
@@ -239,7 +383,10 @@ export const ensureSample = mutation({
       .query("profiles")
       .withIndex("by_slug", (q) => q.eq("slug", SAMPLE_SLUG))
       .first();
-    if (existing) return false;
+    if (existing) {
+      await topUpSample(ctx, existing._id);
+      return false;
+    }
     await insertSampleData(ctx);
     return true;
   },

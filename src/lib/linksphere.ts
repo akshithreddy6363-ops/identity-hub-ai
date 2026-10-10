@@ -6,6 +6,12 @@
 /** Slug of the clearly-labelled demonstration profile shipped with the app. */
 export const SAMPLE_SLUG = "aarav-mehta";
 
+/**
+ * Stable token for the sample profile's tailored share view, so the Smart Share
+ * feature can be tried without an account. It resolves to sample data only.
+ */
+export const SAMPLE_SHARE_TOKEN = "aaravrecruiter";
+
 export const SOCIAL_PLATFORMS = [
   "GitHub",
   "LinkedIn",
@@ -122,6 +128,154 @@ export function formatDate(ts: number): string {
  */
 export type AIMode = "live" | "demo";
 
+/* ------------------------------------------------------------------ *
+ * Proof-of-Skill challenges
+ * ------------------------------------------------------------------ */
+
+export type ChallengeKind = "coding" | "design" | "problem_solving";
+
+export const CHALLENGE_KIND_META: Record<ChallengeKind, string> = {
+  coding: "Coding challenge",
+  design: "Design challenge",
+  problem_solving: "Problem-solving challenge",
+};
+
+export type Provenance = "user_submitted" | "platform_verified";
+
+export const PROVENANCE_META: Record<
+  Provenance,
+  { label: string; badge: string; hint: string }
+> = {
+  user_submitted: {
+    label: "Self-submitted",
+    badge: "border-border bg-muted text-muted-foreground",
+    hint: "Stated by the profile owner. Not independently checked by LinkSphere.",
+  },
+  platform_verified: {
+    label: "Platform-verified",
+    badge: "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    hint: "Owner attached a platform result link. LinkSphere has not re-verified this result.",
+  },
+};
+
+/* ------------------------------------------------------------------ *
+ * Multilingual profiles
+ * ------------------------------------------------------------------ */
+
+export type Locale = "en" | "te" | "hi";
+
+export const LOCALE_META: Record<
+  Locale,
+  { label: string; native: string; promptName: string }
+> = {
+  en: { label: "English", native: "English", promptName: "English" },
+  te: { label: "Telugu", native: "తెలుగు", promptName: "Telugu" },
+  hi: { label: "Hindi", native: "हिन्दी", promptName: "Hindi" },
+};
+
+/** Locales the translator can produce (English is the original). */
+export const TRANSLATABLE_LOCALES = ["te", "hi"] as const;
+export type TranslatableLocale = (typeof TRANSLATABLE_LOCALES)[number];
+
+/* ------------------------------------------------------------------ *
+ * Smart Share Profiles
+ * ------------------------------------------------------------------ */
+
+export type ShareAudience = "recruiter" | "mentor" | "collaborator" | "custom";
+
+export const SHARE_AUDIENCE_META: Record<
+  ShareAudience,
+  { label: string; note: string }
+> = {
+  recruiter: {
+    label: "Recruiter",
+    note: "Roles, head-line strengths, projects and achievements.",
+  },
+  mentor: {
+    label: "Mentor",
+    note: "Learning goals, skills in progress and current projects.",
+  },
+  collaborator: {
+    label: "Collaborator",
+    note: "Projects, stack, contact links and availability.",
+  },
+  custom: { label: "Custom", note: "You choose every section." },
+};
+
+/* ------------------------------------------------------------------ *
+ * AI Interview Mode
+ * ------------------------------------------------------------------ */
+
+export type InterviewTrack = "recruiter" | "developer" | "student";
+
+export const INTERVIEW_TRACK_META: Record<
+  InterviewTrack,
+  { label: string; blurb: string }
+> = {
+  recruiter: {
+    label: "Recruiter",
+    blurb: "Evidence-backed skills, delivery and achievements.",
+  },
+  developer: {
+    label: "Developer",
+    blurb: "Technologies actually used, deepest project, technical proof.",
+  },
+  student: {
+    label: "Student",
+    blurb: "Study, competitions and what is being learned right now.",
+  },
+};
+
+export interface InterviewEvidence {
+  kind: "project" | "achievement" | "challenge";
+  title: string;
+  url?: string;
+}
+
+export interface InterviewAnswer {
+  question: string;
+  answer: string;
+  answered: boolean;
+  evidence: InterviewEvidence[];
+}
+
+export interface InterviewResult {
+  answers: InterviewAnswer[];
+  /** Deterministically computed "what is not published yet" list. */
+  gaps: string[];
+}
+
+/* ------------------------------------------------------------------ *
+ * Personalized skills roadmap
+ * ------------------------------------------------------------------ */
+
+export interface RoadmapPractice {
+  kind: "project" | "practice" | "course";
+  title: string;
+  detail: string;
+}
+
+export interface RoadmapMilestone {
+  title: string;
+  focus: string;
+  why: string;
+  skills: string[];
+  practices: RoadmapPractice[];
+}
+
+export interface RoadmapResult {
+  summary: string;
+  gaps: string[];
+  milestones: RoadmapMilestone[];
+}
+
+/**
+ * Team Finder is deterministic matching, and the UI says exactly that — it is
+ * never presented as an AI verdict.
+ */
+export const TEAM_FINDER_NOTE =
+  "Rule-based matching over published profiles — complementary skills and shared interests, not an AI judgement.";
+
 export interface BioDraftInput {
   name: string;
   headline: string;
@@ -158,6 +312,12 @@ export const AI_NOTES = {
   ) => `AI credentials unavailable — this answer was keyword-matched from ${name}'s published profile, not written by a model.`,
   match:
     "AI credentials unavailable — this is a rule-based keyword comparison of the opportunity against your profile, not an AI analysis.",
+  interview: (name: string) =>
+    `AI credentials unavailable — these answers were extracted from ${name}'s published profile by rules, not written by a model.`,
+  roadmap:
+    "AI credentials unavailable — this roadmap was assembled from a built-in skill map and your published profile, not generated by a model.",
+  translation:
+    "AI credentials unavailable — translation needs a model, so the original English text is shown unchanged. Nothing was machine-translated.",
 } as const;
 
 /** Answer tokenization helper: lowercase words of 3+ chars without stopwords. */

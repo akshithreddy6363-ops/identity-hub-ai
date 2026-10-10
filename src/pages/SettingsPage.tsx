@@ -12,8 +12,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { TagInput } from "@/components/TagInput";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/use-auth";
@@ -29,10 +38,11 @@ import {
   ShieldCheck,
   Sun,
   Trash2,
+  UsersRound,
 } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { useTheme } from "next-themes";
-import { useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
@@ -58,6 +68,11 @@ const SECTION_ROWS = [
     key: "achievements",
     label: "Achievement Passport",
     note: "Published passport entries.",
+  },
+  {
+    key: "challenges",
+    label: "Proof-of-Skill challenges",
+    note: "Published challenge submissions and their evidence.",
   },
   {
     key: "contact",
@@ -99,6 +114,186 @@ function ThemePicker() {
         </button>
       ))}
     </div>
+  );
+}
+
+/**
+ * Team Finder consent controls. Everything here is opt-in and revocable: a
+ * member who turns "Open to teams" off disappears from the Team Finder
+ * immediately, and contact details are only ever shared with signed-in members
+ * after an explicit choice.
+ */
+function TeamFinderSettings({
+  openToTeams,
+  availability,
+  contactPolicy,
+  lookingFor,
+  onPatch,
+}: {
+  openToTeams: boolean;
+  availability: string;
+  contactPolicy: "hidden" | "signed_in_members";
+  lookingFor: string[];
+  onPatch: (patch: {
+    openToTeams?: boolean;
+    teamAvailability?: string;
+    contactPolicy?: "hidden" | "signed_in_members";
+    teamLookingFor?: string[];
+  }) => Promise<void>;
+}) {
+  const [draftLookingFor, setDraftLookingFor] = useState<string[]>(lookingFor);
+  const [availabilityDraft, setAvailabilityDraft] = useState(availability);
+  const [savingNeeds, setSavingNeeds] = useState(false);
+
+  return (
+    <Panel
+      icon={UsersRound}
+      title="Team Finder"
+      description="Hackathon teammate matching is opt-in — you decide what is shared."
+    >
+      <div className="grid gap-1">
+        <div className="flex items-center justify-between gap-4 rounded-lg px-1 py-2.5">
+          <div>
+            <Label htmlFor="open-to-teams" className="text-sm font-medium">
+              Open to teams
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Show your published profile in other members&apos; teammate results.
+            </p>
+          </div>
+          <Switch
+            id="open-to-teams"
+            checked={openToTeams}
+            onCheckedChange={async (checked) => {
+              try {
+                await onPatch({ openToTeams: checked });
+                toast.success(
+                  checked
+                    ? "You can now be found by other members"
+                    : "You no longer appear in team results",
+                );
+              } catch (error) {
+                toast.error(
+                  error instanceof Error ? error.message : "Could not update.",
+                );
+              }
+            }}
+          />
+        </div>
+
+        <div className="mt-2 grid gap-2 rounded-lg border bg-muted/30 px-3.5 py-3">
+          <Label htmlFor="availability" className="text-sm font-medium">
+            Availability
+          </Label>
+          <div className="flex flex-wrap gap-2">
+            <Input
+              id="availability"
+              value={availabilityDraft}
+              maxLength={80}
+              onChange={(e) => setAvailabilityDraft(e.target.value)}
+              placeholder="Weekends · remote-friendly"
+              className="min-w-40 flex-1"
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={availabilityDraft.trim() === availability}
+              onClick={async () => {
+                try {
+                  await onPatch({ teamAvailability: availabilityDraft.trim() });
+                  toast.success("Availability updated");
+                } catch (error) {
+                  toast.error(
+                    error instanceof Error ? error.message : "Could not update.",
+                  );
+                }
+              }}
+            >
+              Save
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Shown only to signed-in members browsing the Team Finder.
+          </p>
+        </div>
+
+        <div className="mt-2 grid gap-2 rounded-lg border bg-muted/30 px-3.5 py-3">
+          <Label className="text-sm font-medium">What you are looking for</Label>
+          <TagInput
+            value={draftLookingFor}
+            onChange={setDraftLookingFor}
+            placeholder="e.g. Flutter, UI design"
+            max={12}
+          />
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">
+              Used to rank complementary teammates for you only.
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={
+                savingNeeds ||
+                draftLookingFor.join("|") === lookingFor.join("|")
+              }
+              onClick={async () => {
+                setSavingNeeds(true);
+                try {
+                  await onPatch({ teamLookingFor: draftLookingFor });
+                  toast.success("Teammate preferences updated");
+                } catch (error) {
+                  toast.error(
+                    error instanceof Error ? error.message : "Could not update.",
+                  );
+                } finally {
+                  setSavingNeeds(false);
+                }
+              }}
+            >
+              Save
+            </Button>
+          </div>
+        </div>
+
+        <div className="mt-2 grid gap-2 rounded-lg border bg-muted/30 px-3.5 py-3">
+          <Label className="text-sm font-medium">Contact details</Label>
+          <Select
+            value={contactPolicy}
+            onValueChange={async (value) => {
+              try {
+                await onPatch({
+                  contactPolicy: value as "hidden" | "signed_in_members",
+                });
+                toast.success(
+                  value === "hidden"
+                    ? "Contact details are hidden"
+                    : "Contact details shared with signed-in members",
+                );
+              } catch (error) {
+                toast.error(
+                  error instanceof Error ? error.message : "Could not update.",
+                );
+              }
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="hidden">Hidden from everyone</SelectItem>
+              <SelectItem value="signed_in_members">
+                Shared with signed-in members
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs leading-5 text-muted-foreground">
+            Your social links are never shown to signed-out visitors or to other
+            members unless you choose to share them here. You can change this at
+            any time.
+          </p>
+        </div>
+      </div>
+    </Panel>
   );
 }
 
@@ -165,6 +360,15 @@ export default function SettingsPage() {
       </header>
 
       <div className="grid gap-6 lg:grid-cols-2">
+        <TeamFinderSettings
+          openToTeams={profile.openToTeams === true}
+          availability={profile.teamAvailability ?? ""}
+          contactPolicy={profile.contactPolicy ?? "hidden"}
+          lookingFor={profile.teamLookingFor ?? []}
+          onPatch={async (patch) => {
+            await updateProfile(patch);
+          }}
+        />
         <Panel icon={Eye} title="Public sections" description="Choose exactly what visitors see.">
           <div className="grid gap-1">
             {SECTION_ROWS.map((row) => (

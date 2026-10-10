@@ -11,13 +11,18 @@ import {
   Award,
   ExternalLink,
   FolderGit2,
+  Github,
   LayoutDashboard,
   LogOut,
   Menu,
+  Route,
   Settings,
+  Share2,
   Sparkles,
+  Swords,
   Target,
   UserRound,
+  UsersRound,
 } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
@@ -31,6 +36,7 @@ const NAV_GROUPS = [
       { to: "/dashboard/profile", label: "Profile", icon: UserRound },
       { to: "/dashboard/projects", label: "Projects", icon: FolderGit2 },
       { to: "/dashboard/achievements", label: "Achievements", icon: Award },
+      { to: "/dashboard/challenges", label: "Challenges", icon: Swords },
     ],
   },
   {
@@ -38,6 +44,15 @@ const NAV_GROUPS = [
     items: [
       { to: "/dashboard/ai", label: "AI Studio", icon: Sparkles },
       { to: "/dashboard/matcher", label: "Opportunity Matcher", icon: Target },
+      { to: "/dashboard/roadmap", label: "Skills roadmap", icon: Route },
+      { to: "/dashboard/team", label: "Team finder", icon: UsersRound },
+      { to: "/dashboard/share", label: "Share profiles", icon: Share2 },
+    ],
+  },
+  {
+    label: "Portfolio",
+    items: [
+      { to: "/dashboard/integrations", label: "Integrations", icon: Github },
     ],
   },
   {

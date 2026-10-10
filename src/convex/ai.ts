@@ -11,27 +11,41 @@
  */
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
-import { AI_NOTES, type MatchResult } from "../lib/linksphere";
+import type { InterviewResult, MatchResult, RoadmapResult } from "../lib/linksphere";
+import { AI_NOTES } from "../lib/linksphere";
 import { vly } from "../lib/vly-integrations";
 import {
   bioSystemPrompt,
   bioUserPrompt,
   buildTwinContext,
+  computeProfileGaps,
   demoBio,
+  demoInterview,
   demoMatch,
   demoProjectSummary,
+  demoRoadmap,
   demoTwinAnswer,
+  interviewQuestions,
+  interviewSystemPrompt,
+  interviewUserPrompt,
   matcherSystemPrompt,
   matcherUserPrompt,
+  parseInterviewJson,
   parseMatchJson,
+  parseRoadmapJson,
+  parseTranslationJson,
   projectSystemPrompt,
   projectUserPrompt,
+  roadmapSystemPrompt,
+  roadmapUserPrompt,
+  translationSystemPrompt,
+  translationUserPrompt,
   twinSystemPrompt,
   twinUserPrompt,
 } from "./aiHelpers";
 import { buildPublicView } from "./helpers";
 import { internal } from "./_generated/api";
-import { action } from "./_generated/server";
+import { action, type ActionCtx } from "./_generated/server";
 
 const MODEL = "gpt-4o-mini";
 
@@ -276,6 +290,208 @@ export const matchOpportunity = action({
       ),
       mode: "demo",
       note: AI_NOTES.match,
+    };
+  },
+});
+
+/* ------------------------------------------------------------------ *
+ * AI Interview Mode — structured, evidence-linked Q&A on a public profile
+ * ------------------------------------------------------------------ */
+
+export const runInterview = action({
+  args: {
+    slug: v.string(),
+    track: v.union(
+      v.literal("recruiter"),
+      v.literal("developer"),
+      v.literal("student"),
+    ),
+  },
+  handler: async (ctx, { slug, track }): Promise<
+    | {
+        ok: true;
+        mode: "live" | "demo";
+        result: InterviewResult;
+        note?: string;
+      }
+    | { ok: false; error: string }
+  > => {
+    const bundle = await ctx.runQuery(internal.internalData.loadProfileBundle, {
+      slug,
+    });
+    if (!bundle) return { ok: false, error: "This profile does not exist." };
+    const { profile, projects, achievements, challenges } = bundle;
+
+    const viewerId = await getAuthUserId(ctx);
+    const isOwner = profile.ownerId === viewerId;
+    if (!profile.published && !isOwner)
+      return { ok: false, error: "This profile is not published." };
+    if (!profile.twinEnabled && !isOwner)
+      return { ok: false, error: "AI features are turned off for this profile." };
+
+    const view = buildPublicView(profile, projects, achievements, challenges);
+    if (!view) return { ok: false, error: "This profile is not published." };
+
+    const questions = interviewQuestions(track);
+    // Missing information is computed locally, never by the model.
+    const gaps = computeProfileGaps(view);
+    const context = buildTwinContext(view);
+
+    const result = await complete(
+      interviewSystemPrompt(view),
+      interviewUserPrompt(questions, context, gaps),
+      1400,
+    );
+    if ("text" in result) {
+      const parsed = parseInterviewJson(result.text, view, questions, gaps);
+      if (parsed) return { ok: true, mode: "live", result: parsed };
+    }
+    return {
+      ok: true,
+      mode: "demo",
+      result: demoInterview(track, view),
+      note: AI_NOTES.interview(view.displayName),
+    };
+  },
+});
+
+/* ------------------------------------------------------------------ *
+ * Personalized skills roadmap
+ * ------------------------------------------------------------------ */
+
+/** The owner's own data as a view, drafts included (never used for visitors). */
+async function ownViewForAi(
+  ctx: ActionCtx,
+): Promise<Awaited<ReturnType<typeof buildPublicView>>> {
+  const bundle = await ctx.runQuery(internal.internalData.loadMyBundle, {});
+  if (!bundle) return null;
+  const { profile, projects, achievements, challenges } = bundle;
+  return buildPublicView(
+    {
+      ...profile,
+      published: true,
+      visibility: {
+        about: true,
+        skills: true,
+        projects: true,
+        achievements: true,
+        challenges: true,
+        contact: true,
+      },
+    },
+    projects.map((p) => ({ ...p, published: true })),
+    achievements.map((a) => ({ ...a, published: true })),
+    challenges.map((c) => ({ ...c, published: true })),
+  );
+}
+
+export const generateRoadmap = action({
+  args: { targetRole: v.string() },
+  handler: async (ctx, { targetRole }): Promise<
+    | {
+        ok: true;
+        mode: "live" | "demo";
+        result: RoadmapResult;
+        note?: string;
+      }
+    | { ok: false; error: string }
+  > => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null)
+      return { ok: false, error: "Sign in to generate your roadmap." };
+
+    const role = targetRole.trim();
+    if (role.length < 2)
+      return {
+        ok: false,
+        error: 'Enter a target role, for example "applied AI internship".',
+      };
+    if (role.length > 120)
+      return { ok: false, error: "Target role must be 120 characters or fewer." };
+
+    const view = await ownViewForAi(ctx);
+    if (!view)
+      return { ok: false, error: "Create your profile first, then generate a roadmap." };
+
+    const context = buildTwinContext(view);
+    const result = await complete(
+      roadmapSystemPrompt(),
+      roadmapUserPrompt(role, context),
+      1800,
+    );
+    if ("text" in result) {
+      const parsed = parseRoadmapJson(result.text);
+      if (parsed) return { ok: true, mode: "live", result: parsed };
+    }
+    return {
+      ok: true,
+      mode: "demo",
+      result: demoRoadmap(view, role),
+      note: AI_NOTES.roadmap,
+    };
+  },
+});
+
+/* ------------------------------------------------------------------ *
+ * Multilingual profiles
+ * ------------------------------------------------------------------ */
+
+export const translateProfile = action({
+  args: { locale: v.union(v.literal("te"), v.literal("hi")) },
+  handler: async (ctx, { locale }): Promise<
+    | {
+        ok: true;
+        mode: "live" | "demo";
+        fields: {
+          headline: string;
+          bio: string;
+          goals: string;
+          education: string;
+          interests: string[];
+        };
+        note?: string;
+      }
+    | { ok: false; error: string }
+  > => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null)
+      return { ok: false, error: "Sign in to translate your profile." };
+
+    const bundle = await ctx.runQuery(internal.internalData.loadMyBundle, {});
+    if (!bundle)
+      return { ok: false, error: "Create your profile first, then translate it." };
+    const { profile } = bundle;
+
+    const fields = {
+      headline: profile.headline ?? "",
+      bio: profile.bio ?? "",
+      goals: profile.goals ?? "",
+      education: profile.education ?? "",
+      interests: profile.interests,
+    };
+    if (!fields.headline && !fields.bio && !fields.goals && !fields.education) {
+      return {
+        ok: false,
+        error: "Add a headline, bio or goals before translating your profile.",
+      };
+    }
+
+    const result = await complete(
+      translationSystemPrompt(locale),
+      translationUserPrompt(fields),
+      1500,
+    );
+    if ("text" in result) {
+      const parsed = parseTranslationJson(result.text);
+      if (parsed) return { ok: true, mode: "live", fields: parsed };
+    }
+    // Honest fallback: nothing is machine-translated, so the original English
+    // text is returned unchanged and labelled as demo mode in the UI.
+    return {
+      ok: true,
+      mode: "demo",
+      fields,
+      note: AI_NOTES.translation,
     };
   },
 });

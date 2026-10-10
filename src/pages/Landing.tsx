@@ -5,7 +5,7 @@ import { VerificationBadge } from "@/components/VerificationBadge";
 import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/use-auth";
-import { SAMPLE_SLUG } from "@/lib/linksphere";
+import { SAMPLE_SHARE_TOKEN, SAMPLE_SLUG } from "@/lib/linksphere";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import {
@@ -16,13 +16,19 @@ import {
   CircleCheck,
   ExternalLink,
   FolderGit2,
+  Github,
+  Languages,
   Link2,
   MessagesSquare,
   PenLine,
+  Route,
+  Share2,
   ShieldCheck,
   Sparkles,
   SunMoon,
+  Swords,
   Target,
+  UsersRound,
   Waypoints,
 } from "lucide-react";
 import { useMutation } from "convex/react";
@@ -132,6 +138,9 @@ function SiteHeader() {
           </a>
           <a href="#sample" className="transition-colors hover:text-foreground">
             Sample profile
+          </a>
+          <a href="#advanced" className="transition-colors hover:text-foreground">
+            Advanced
           </a>
         </nav>
 
@@ -517,6 +526,99 @@ function SpotlightFeatures() {
 }
 
 /* ------------------------------------------------------------------ */
+/* Advanced features                                                   */
+/* ------------------------------------------------------------------ */
+
+const ADVANCED = [
+  {
+    icon: MessagesSquare,
+    title: "AI Interview Mode",
+    note: "Recruiter, developer or student interviews that cite the evidence behind every answer — and name what is missing.",
+  },
+  {
+    icon: Swords,
+    title: "Proof-of-Skill challenges",
+    note: "Completed coding, design and problem-solving challenges with the submission, the outcome and the evidence attached.",
+  },
+  {
+    icon: UsersRound,
+    title: "AI Team Finder",
+    note: "Discover teammates with complementary skills and shared interests. Contact details appear only with explicit consent.",
+  },
+  {
+    icon: Route,
+    title: "Personalized skills roadmap",
+    note: "A milestone plan for your target role, built from your real profile, with project-based practice at every step.",
+  },
+  {
+    icon: Languages,
+    title: "Multilingual profiles",
+    note: "Publish reviewed versions in English, తెలుగు and हिन्दी — project names, technical terms and links stay exactly as written.",
+  },
+  {
+    icon: Share2,
+    title: "Smart share profiles",
+    note: "Tailored views for recruiters, mentors and collaborators that can only ever narrow what your public profile shows.",
+  },
+  {
+    icon: Github,
+    title: "Living portfolio integrations",
+    note: "Sync selected public GitHub repositories, choose what to import, and refresh on your terms — simulated samples are always labelled.",
+  },
+];
+
+function AdvancedFeatures() {
+  return (
+    <Section id="advanced" className="py-20 sm:py-24">
+      <SectionHeading
+        eyebrow="Advanced"
+        title="Seven more ways to show the work"
+        description="Shipped end-to-end and honest to the last label: every AI result is marked live or demo, every imported claim says where it came from, and nothing is ever invented on your behalf."
+      />
+      <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {ADVANCED.map((item, index) => (
+          <Reveal key={item.title} delay={(index % 3) * 0.06}>
+            <div className="h-full rounded-2xl border border-border/80 bg-card p-5 transition-colors hover:border-primary/40">
+              <div className="mb-3.5 flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <item.icon className="size-5" />
+              </div>
+              <p className="text-sm font-semibold tracking-tight">{item.title}</p>
+              <p className="mt-1.5 text-[13px] leading-6 text-muted-foreground">
+                {item.note}
+              </p>
+            </div>
+          </Reveal>
+        ))}
+        <Reveal delay={0.12}>
+          <div className="flex h-full flex-col justify-between rounded-2xl border border-primary/25 bg-primary/5 p-5">
+            <div>
+              <p className="text-sm font-semibold tracking-tight">
+                Try it on the sample profile
+              </p>
+              <p className="mt-1.5 text-[13px] leading-6 text-muted-foreground">
+                Run the interview track, open a tailored recruiter view, and see
+                the labelled challenge evidence — no account needed.
+              </p>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button size="sm" asChild>
+                <Link to={`${SAMPLE_URL}#interview`}>
+                  Run an interview
+                  <ArrowRight className="size-3.5" />
+                </Link>
+              </Button>
+              <Button size="sm" variant="outline" asChild>
+                <Link to={`/s/${SAMPLE_SHARE_TOKEN}`}>Recruiter view</Link>
+              </Button>
+            </div>
+          </div>
+        </Reveal>
+      </div>
+    </Section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Secondary features                                                  */
 /* ------------------------------------------------------------------ */
 
@@ -825,6 +927,8 @@ export default function Landing() {
         <SecondaryFeatures />
         <div className="border-t border-border/60" />
         <SamplePreview />
+        <div className="border-t border-border/60" />
+        <AdvancedFeatures />
         <HowItWorks />
         <FinalCTA />
       </main>

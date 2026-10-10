@@ -3,17 +3,28 @@ import { Brand } from "@/components/Brand";
 import { CopyButton } from "@/components/CopyButton";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
 import {
   ACHIEVEMENT_KIND_META,
+  CHALLENGE_KIND_META,
+  INTERVIEW_TRACK_META,
+  LOCALE_META,
   PROJECT_STATUS_META,
+  PROVENANCE_META,
+  SAMPLE_SHARE_TOKEN,
   SAMPLE_SLUG,
+  TRANSLATABLE_LOCALES,
   formatDate,
   initials,
   normalizeSkill,
+  type AIMode,
+  type InterviewResult,
+  type InterviewTrack,
+  type Locale,
 } from "@/lib/linksphere";
 import { cn } from "@/lib/utils";
 import {
@@ -21,10 +32,12 @@ import {
   Award,
   BadgeCheck,
   FileText,
+  ExternalLink,
   FolderGit2,
   Github,
   Globe,
   Instagram,
+  Languages,
   Lightbulb,
   Link2,
   Linkedin,
@@ -33,7 +46,9 @@ import {
   MapPin,
   MessageSquare,
   Send,
+  ShieldQuestion,
   Sparkles,
+  Swords,
   Trophy,
   Twitter,
   UserRound,
@@ -41,11 +56,12 @@ import {
   Youtube,
 } from "lucide-react";
 import { useAction, useMutation, useQuery } from "convex/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import type { PublicView } from "@/convex/helpers";
 
-type PublicProfile = NonNullable<PublicView>;
+export type PublicProfile = NonNullable<PublicView>;
+type Translation = NonNullable<PublicProfile["translations"]>[number];
 
 const PLATFORM_ICON: Record<string, typeof Github> = {
   GitHub: Github,
@@ -473,6 +489,294 @@ function TwinChat({ profile }: { profile: PublicProfile }) {
 }
 
 /* ------------------------------------------------------------------ */
+/* Proof-of-Skill challenges                                           */
+/* ------------------------------------------------------------------ */
+
+function ProfileChallenges({ profile }: { profile: PublicProfile }) {
+  return (
+    <section className="mt-6 rounded-2xl border border-border/80 bg-card p-5 sm:p-6">
+      <SectionHeading
+        id="challenges"
+        icon={Swords}
+        title="Proof-of-Skill challenges"
+        subtitle="Challenges completed, with the submission, the outcome and the evidence attached."
+      />
+      <div className="grid gap-3 md:grid-cols-2">
+        {profile.challenges.map((challenge) => {
+          const meta = PROVENANCE_META[challenge.provenance];
+          return (
+            <article key={challenge._id} className="rounded-xl border bg-muted/20 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <h3 className="text-[15px] font-semibold">{challenge.title}</h3>
+                <Badge
+                  variant="outline"
+                  title={meta.hint}
+                  className={cn("gap-1 px-2 py-0.5 text-[11px]", meta.badge)}
+                >
+                  {challenge.provenance === "platform_verified" ? (
+                    <BadgeCheck className="size-3" />
+                  ) : (
+                    <ShieldQuestion className="size-3" />
+                  )}
+                  {meta.label}
+                </Badge>
+              </div>
+              <p className="mt-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
+                {CHALLENGE_KIND_META[challenge.kind]}
+                {challenge.platform ? ` · ${challenge.platform}` : ""}
+                {challenge.difficulty ? ` · ${challenge.difficulty}` : ""}
+              </p>
+              {challenge.description && (
+                <p className="mt-2 text-[13px] leading-6 text-muted-foreground">
+                  {challenge.description}
+                </p>
+              )}
+              {challenge.outcome && (
+                <p className="mt-2 text-[13px]">
+                  <span className="text-muted-foreground">Outcome: </span>
+                  {challenge.outcome}
+                </p>
+              )}
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {challenge.skillLinks.map((skill) => (
+                  <span
+                    key={skill}
+                    className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-[11px] text-primary"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-4 border-t pt-3 text-xs font-medium">
+                {challenge.submissionUrl && (
+                  <a
+                    href={challenge.submissionUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1.5 text-primary transition-opacity hover:opacity-80"
+                  >
+                    <ExternalLink className="size-3.5" />
+                    Submission
+                  </a>
+                )}
+                {challenge.evidence.map((link) => (
+                  <a
+                    key={link.id}
+                    href={link.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1.5 text-primary transition-opacity hover:opacity-80"
+                  >
+                    <Swords className="size-3.5" />
+                    {link.label || "Evidence"}
+                  </a>
+                ))}
+              </div>
+              <p className="mt-2 text-[11px] leading-5 text-muted-foreground/80">
+                {challenge.provenanceNote || meta.hint}
+              </p>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* AI Interview Mode                                                   */
+/* ------------------------------------------------------------------ */
+
+function InterviewMode({ profile }: { profile: PublicProfile }) {
+  const runInterview = useAction(api.ai.runInterview);
+  const [track, setTrack] = useState<InterviewTrack>("recruiter");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [outcome, setOutcome] = useState<{
+    result: InterviewResult;
+    mode: AIMode;
+    note?: string;
+  } | null>(null);
+
+  const run = async (nextTrack: InterviewTrack) => {
+    setTrack(nextTrack);
+    setLoading(true);
+    setOutcome(null);
+    setError(null);
+    try {
+      const result = await runInterview({ slug: profile.slug, track: nextTrack });
+      if (result.ok) {
+        setOutcome({
+          result: result.result,
+          mode: result.mode,
+          note: result.note,
+        });
+      } else {
+        // Show why nothing happened instead of failing silently.
+        setError(result.error);
+      }
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "The interview is unavailable right now.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <section
+      id="interview"
+      className="mt-6 scroll-mt-24 rounded-2xl border border-primary/25 bg-card p-5 sm:p-6"
+    >
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <span className="flex size-8 items-center justify-center rounded-lg bg-primary/15 text-primary">
+              <MessageSquare className="size-4" />
+            </span>
+            <h2 className="text-lg font-semibold tracking-tight">AI Interview Mode</h2>
+          </div>
+          <p className="mt-1 max-w-2xl pl-[42px] text-sm text-muted-foreground">
+            Structured questions about {profile.displayName.split(" ")[0]}&apos;s
+            published skills, projects and achievements — each answer links the
+            evidence behind it, and anything missing is named instead of invented.
+          </p>
+        </div>
+        {outcome && <AIModeBadge mode={outcome.mode} />}
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {(Object.keys(INTERVIEW_TRACK_META) as InterviewTrack[]).map((key) => (
+          <button
+            key={key}
+            type="button"
+            disabled={loading}
+            onClick={() => run(key)}
+            className={cn(
+              "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+              track === key && outcome
+                ? "border-primary/50 bg-primary/10 text-primary"
+                : "bg-muted/40 text-muted-foreground hover:bg-muted",
+            )}
+            title={INTERVIEW_TRACK_META[key].blurb}
+          >
+            {INTERVIEW_TRACK_META[key].label} interview
+          </button>
+        ))}
+      </div>
+
+      {loading && (
+        <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+          <Loader2 className="size-3.5 animate-spin" />
+          Going through the published profile…
+        </div>
+      )}
+
+      {!loading && !outcome && !error && (
+        <p className="mt-4 rounded-xl border border-dashed bg-muted/30 px-4 py-4 text-[13px] leading-6 text-muted-foreground">
+          Pick an interview track to see evidence-linked answers. Answers come
+          only from this profile — questions it cannot answer are reported as
+          missing information, never guessed.
+        </p>
+      )}
+
+      {!loading && error && (
+        <p className="mt-4 rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-3.5 text-[13px] leading-6 text-muted-foreground">
+          {error}
+        </p>
+      )}
+
+      {!loading && outcome && (
+        <div className="mt-4 flex flex-col gap-3">
+          {outcome.result.answers.map((answer, index) => (
+            <div
+              key={`${answer.question}-${index}`}
+              className="rounded-xl border bg-muted/20 px-4 py-3.5"
+            >
+              <p className="text-[13px] font-semibold">{answer.question}</p>
+              <p
+                className={cn(
+                  "mt-1.5 text-[13px] leading-6",
+                  answer.answered ? "text-foreground/90" : "text-muted-foreground italic",
+                )}
+              >
+                {answer.answer}
+              </p>
+              {answer.evidence.length > 0 && (
+                <div className="mt-2.5 flex flex-wrap gap-2">
+                  {answer.evidence.map((item, evidenceIndex) =>
+                    item.url ? (
+                      <a
+                        key={`${item.title}-${evidenceIndex}`}
+                        href={item.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                      >
+                        {item.kind === "project" ? (
+                          <FolderGit2 className="size-3" />
+                        ) : item.kind === "challenge" ? (
+                          <Swords className="size-3" />
+                        ) : (
+                          <Trophy className="size-3" />
+                        )}
+                        {item.title}
+                      </a>
+                    ) : (
+                      <span
+                        key={`${item.title}-${evidenceIndex}`}
+                        className="flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] text-muted-foreground"
+                      >
+                        {item.kind === "project" ? (
+                          <FolderGit2 className="size-3" />
+                        ) : item.kind === "challenge" ? (
+                          <Swords className="size-3" />
+                        ) : (
+                          <Trophy className="size-3" />
+                        )}
+                        {item.title}
+                      </span>
+                    ),
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+
+          {outcome.result.gaps.length > 0 && (
+            <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-3.5">
+              <p className="text-[13px] font-semibold">
+                Not on this profile yet
+              </p>
+              <ul className="mt-1.5 grid gap-1">
+                {outcome.result.gaps.map((gap) => (
+                  <li
+                    key={gap}
+                    className="flex items-start gap-2 text-[13px] leading-6 text-muted-foreground"
+                  >
+                    <span className="mt-2 size-1.5 shrink-0 rounded-full bg-amber-500" />
+                    {gap}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {outcome.note && <AIModeNote mode={outcome.mode} note={outcome.note} />}
+          <p className="text-[11px] text-muted-foreground">
+            Evidence is matched from the published profile — the wording is
+            assisted, the proof is not.
+          </p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Page                                                                */
 /* ------------------------------------------------------------------ */
 
@@ -480,25 +784,71 @@ const SECTION_ANCHORS = [
   { href: "#about", label: "About", Icon: UserRound },
   { href: "#skills", label: "Skills", Icon: Waypoints },
   { href: "#projects", label: "Projects", Icon: FolderGit2 },
+  { href: "#challenges", label: "Challenges", Icon: Swords },
   { href: "#passport", label: "Passport", Icon: BadgeCheck },
-  { href: "#twin", label: "AI twin", Icon: MessageSquare },
+  { href: "#interview", label: "Interview", Icon: MessageSquare },
+  { href: "#twin", label: "AI twin", Icon: Sparkles },
 ] as const;
 
-function ProfileView({ profile }: { profile: PublicProfile }) {
+/**
+ * Renders a published profile. Shared by the public page and Smart Share
+ * Profiles — `banner` lets the share view explain which tailored view you are
+ * looking at, and translations only ever arrive from the public query.
+ */
+export function ProfileView({
+  profile,
+  banner,
+}: {
+  profile: PublicProfile;
+  banner?: ReactNode;
+}) {
   const url =
     typeof window !== "undefined"
       ? `${window.location.origin}/p/${profile.slug}`
       : "";
 
+  const translations = profile.translations ?? [];
+  const [locale, setLocale] = useState<Locale>("en");
+  const translation: Translation | null =
+    locale === "en"
+      ? null
+      : translations.find((item) => item.locale === locale) ?? null;
+
+  // A translation only ever substitutes the prose fields; project titles,
+  // technology names and links always stay exactly as published.
+  const headline = translation?.headline?.trim() || profile.headline;
+  const about = profile.about
+    ? {
+        ...profile.about,
+        bio: translation?.bio?.trim() || profile.about.bio,
+        goals: translation?.goals?.trim() || profile.about.goals,
+        education: translation?.education?.trim() || profile.about.education,
+        interests: translation?.interests.length
+          ? translation.interests
+          : profile.about.interests,
+      }
+    : null;
+
   return (
     <>
+      {banner}
+
       {/* Sample banner */}
       {profile.isSample && (
-        <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-[13px] leading-6 text-amber-700 dark:text-amber-300">
-          <strong className="font-semibold">Sample profile.</strong> All content
-          on this page is clearly labelled demonstration data for LinkSphere AI —
-          not a real person's verified history. No entry here is marked
-          “Verified”.
+        <div className="mb-6 flex flex-col gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-[13px] leading-6 text-amber-700 dark:text-amber-300">
+          <p>
+            <strong className="font-semibold">Sample profile.</strong> All content
+            on this page is clearly labelled demonstration data for LinkSphere AI
+            — not a real person's verified history. No entry here is marked
+            “Verified”.
+          </p>
+          <Link
+            to={`/s/${SAMPLE_SHARE_TOKEN}`}
+            className="flex items-center gap-1.5 text-xs font-medium underline decoration-amber-500/50 underline-offset-2 transition-opacity hover:opacity-80"
+          >
+            <ExternalLink className="size-3.5" />
+            See a tailored recruiter view of this sample profile
+          </Link>
         </div>
       )}
 
@@ -531,21 +881,71 @@ function ProfileView({ profile }: { profile: PublicProfile }) {
                   </span>
                 )}
               </div>
-              {profile.headline && (
-                <p className="mt-1 text-[15px] text-muted-foreground">
-                  {profile.headline}
-                </p>
+              {headline && (
+                <p className="mt-1 text-[15px] text-muted-foreground">{headline}</p>
               )}
-              {profile.about?.location && (
+              {translation && (
+                <Badge
+                  variant="outline"
+                  className="mt-2 border-primary/30 bg-primary/10 text-primary"
+                >
+                  <Languages className="size-3" />
+                  {LOCALE_META[translation.locale].label} · AI translated
+                </Badge>
+              )}
+              {about?.location && (
                 <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
                   <MapPin className="size-3.5" />
-                  {profile.about.location}
+                  {about.location}
                 </p>
               )}
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            {translations.length > 0 && (
+              <div className="flex items-center gap-0.5 rounded-lg border bg-muted/30 p-1">
+                <Languages className="mx-1.5 size-3.5 text-muted-foreground" />
+                <button
+                  type="button"
+                  onClick={() => setLocale("en")}
+                  className={cn(
+                    "rounded-md px-2 py-1 text-xs font-medium transition-colors",
+                    locale === "en"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {LOCALE_META.en.native}
+                </button>
+                {TRANSLATABLE_LOCALES.map((code) => {
+                  const available = translations.some((item) => item.locale === code);
+                  return (
+                    <button
+                      key={code}
+                      type="button"
+                      disabled={!available}
+                      onClick={() => setLocale(code)}
+                      title={
+                        available
+                          ? LOCALE_META[code].label
+                          : `No ${LOCALE_META[code].label} version published`
+                      }
+                      className={cn(
+                        "rounded-md px-2 py-1 text-xs font-medium transition-colors",
+                        locale === code
+                          ? "bg-background text-foreground shadow-sm"
+                          : available
+                            ? "text-muted-foreground hover:text-foreground"
+                            : "cursor-not-allowed text-muted-foreground/40",
+                      )}
+                    >
+                      {LOCALE_META[code].native}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             <CopyButton value={url} />
             {profile.contact?.resumeUrl && (
               <Button size="sm" variant="outline" asChild>
@@ -572,6 +972,7 @@ function ProfileView({ profile }: { profile: PublicProfile }) {
             {[
               [profile.projects.length, "Projects"],
               [profile.achievements.length, "Achievements"],
+              [profile.challenges.length, "Challenges"],
               [profile.skills.length, "Skills"],
             ].map(([value, label]) => (
               <div key={String(label)} className="flex items-baseline gap-1.5">
@@ -616,12 +1017,23 @@ function ProfileView({ profile }: { profile: PublicProfile }) {
       </header>
 
       {/* About */}
-      {profile.about && (
+      {about && (
         <section className="mt-6 rounded-2xl border border-border/80 bg-card p-5 sm:p-6">
           <SectionHeading id="about" icon={UserRound} title="About" />
-          {profile.about.bio ? (
+          {translation && (
+            <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-primary/25 bg-primary/5 px-3.5 py-2.5 text-xs leading-5">
+              <Languages className="size-3.5 shrink-0 text-primary" />
+              <span className="flex-1">
+                Showing the {LOCALE_META[translation.locale].label} version of this
+                profile. The owner reviewed the AI translation; project names,
+                technologies and links stay exactly as published.
+              </span>
+              <AIModeBadge mode={translation.mode} />
+            </div>
+          )}
+          {about.bio ? (
             <p className="max-w-3xl text-[15px] leading-7 text-foreground/90">
-              {profile.about.bio}
+              {about.bio}
             </p>
           ) : (
             <p className="text-sm text-muted-foreground">
@@ -629,26 +1041,26 @@ function ProfileView({ profile }: { profile: PublicProfile }) {
             </p>
           )}
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            {profile.about.education && (
+            {about.education && (
               <div className="rounded-xl border bg-muted/30 px-4 py-3">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Education
                 </p>
-                <p className="mt-1 text-sm">{profile.about.education}</p>
+                <p className="mt-1 text-sm">{about.education}</p>
               </div>
             )}
-            {profile.about.goals && (
+            {about.goals && (
               <div className="rounded-xl border bg-muted/30 px-4 py-3">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Goal
                 </p>
-                <p className="mt-1 text-sm">{profile.about.goals}</p>
+                <p className="mt-1 text-sm">{about.goals}</p>
               </div>
             )}
           </div>
-          {profile.about.interests.length > 0 && (
+          {about.interests.length > 0 && (
             <div className="mt-4 flex flex-wrap gap-2">
-              {profile.about.interests.map((interest) => (
+              {about.interests.map((interest) => (
                 <span
                   key={interest}
                   className="rounded-full border bg-muted/30 px-3 py-1 text-xs text-muted-foreground"
@@ -770,6 +1182,14 @@ function ProfileView({ profile }: { profile: PublicProfile }) {
         </div>
       )}
 
+      {/* Proof-of-Skill challenges */}
+      {profile.challenges.length > 0 && <ProfileChallenges profile={profile} />}
+
+      {/* AI Interview Mode */}
+      {profile.twinEnabled && (
+        <InterviewMode profile={profile} />
+      )}
+
       {/* Twin */}
       {profile.twinEnabled && (
         <div className="mt-6">
@@ -778,10 +1198,11 @@ function ProfileView({ profile }: { profile: PublicProfile }) {
       )}
 
       {/* Nothing published */}
-      {!profile.about &&
+      {!about &&
         profile.skills.length === 0 &&
         profile.projects.length === 0 &&
-        profile.achievements.length === 0 && (
+        profile.achievements.length === 0 &&
+        profile.challenges.length === 0 && (
           <div className="mt-6 rounded-2xl border border-dashed bg-muted/30 px-6 py-10 text-center text-sm text-muted-foreground">
             This profile hasn&apos;t published any sections yet.
           </div>

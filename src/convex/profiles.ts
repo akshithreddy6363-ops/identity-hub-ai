@@ -87,9 +87,13 @@ export const ensureProfile = mutation({
         skills: true,
         projects: true,
         achievements: true,
+        challenges: true,
         contact: true,
       },
       twinEnabled: true,
+      openToTeams: false,
+      teamLookingFor: [],
+      contactPolicy: "hidden",
       createdAt: now,
       updatedAt: now,
     });
@@ -116,6 +120,12 @@ export const updateProfile = mutation({
     visibility: v.optional(visibilityValidator),
     twinEnabled: v.optional(v.boolean()),
     twinIntro: v.optional(v.string()),
+    openToTeams: v.optional(v.boolean()),
+    teamAvailability: v.optional(v.string()),
+    teamLookingFor: v.optional(v.array(v.string())),
+    contactPolicy: v.optional(
+      v.union(v.literal("hidden"), v.literal("signed_in_members")),
+    ),
   },
   handler: async (ctx, args) => {
     const profile = await requireMyProfile(ctx);
@@ -183,6 +193,18 @@ export const updateProfile = mutation({
         throw new Error("Twin instructions must be 600 characters or fewer.");
       patch.twinIntro = args.twinIntro;
     }
+    if (args.openToTeams !== undefined) patch.openToTeams = args.openToTeams;
+    if (args.teamAvailability !== undefined) {
+      if (args.teamAvailability.length > 120)
+        throw new Error("Availability must be 120 characters or fewer.");
+      patch.teamAvailability = args.teamAvailability.trim();
+    }
+    if (args.teamLookingFor !== undefined) {
+      const looking = args.teamLookingFor.map((s) => s.trim()).filter(Boolean);
+      if (looking.length > 20) throw new Error("Too many teammate preferences.");
+      patch.teamLookingFor = looking;
+    }
+    if (args.contactPolicy !== undefined) patch.contactPolicy = args.contactPolicy;
     if (args.resumePublic !== undefined) patch.resumePublic = args.resumePublic;
     if (args.published !== undefined) patch.published = args.published;
     if (args.visibility !== undefined) patch.visibility = args.visibility;

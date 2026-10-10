@@ -13,13 +13,18 @@ import {
   CircleCheck,
   ExternalLink,
   FolderGit2,
+  Github,
   Link2,
   MessagesSquare,
   Plus,
+  Route,
+  Share2,
   Sparkles,
+  Swords,
   Target,
   Trophy,
   UserRound,
+  UsersRound,
   Waypoints,
 } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
@@ -30,6 +35,7 @@ function useCompleteness(
   profile: Doc<"profiles"> | null | undefined,
   projects: Doc<"projects">[] | undefined,
   achievements: Doc<"achievements">[] | undefined,
+  challenges: Doc<"challenges">[] | undefined,
 ) {
   const checks = [
     { label: "Name and headline added", done: !!profile?.headline, to: "/dashboard/profile" },
@@ -40,6 +46,7 @@ function useCompleteness(
     { label: "Education or goals added", done: !!profile?.education || !!profile?.goals, to: "/dashboard/profile" },
     { label: "One published project", done: (projects ?? []).some((p) => p.published), to: "/dashboard/projects" },
     { label: "One achievement added", done: (achievements ?? []).length > 0, to: "/dashboard/achievements" },
+    { label: "One proof-of-skill challenge", done: (challenges ?? []).length > 0, to: "/dashboard/challenges" },
     { label: "Profile published", done: !!profile?.published, to: "/dashboard/profile" },
   ];
   const done = checks.filter((c) => c.done).length;
@@ -51,9 +58,15 @@ export default function Dashboard() {
   const profile = useQuery(api.profiles.myProfile);
   const projects = useQuery(api.projects.listMine);
   const achievements = useQuery(api.achievements.listMine);
+  const challenges = useQuery(api.challenges.listMine);
   const updateProfile = useMutation(api.profiles.updateProfile);
 
-  const { checks, percent } = useCompleteness(profile, projects, achievements);
+  const { checks, percent } = useCompleteness(
+    profile,
+    projects,
+    achievements,
+    challenges,
+  );
   const publicUrl =
     typeof window !== "undefined" && profile
       ? `${window.location.origin}/p/${profile.slug}`
@@ -89,7 +102,7 @@ export default function Dashboard() {
       </header>
 
       {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {[
           {
             icon: FolderGit2,
@@ -108,6 +121,12 @@ export default function Dashboard() {
             label: "Skills",
             value: String(profile?.skills.length ?? 0),
             hint: "with linked evidence",
+          },
+          {
+            icon: Swords,
+            label: "Challenges",
+            value: String((challenges ?? []).length),
+            hint: "with submission evidence",
           },
           {
             icon: MessagesSquare,
@@ -204,6 +223,10 @@ export default function Dashboard() {
             {[
               { to: "/dashboard/ai", icon: Sparkles, label: "Draft my bio with AI" },
               { to: "/dashboard/matcher", icon: Target, label: "Analyze an opportunity" },
+              { to: "/dashboard/roadmap", icon: Route, label: "Plan a skills roadmap" },
+              { to: "/dashboard/team", icon: UsersRound, label: "Find teammates" },
+              { to: "/dashboard/share", icon: Share2, label: "Create a tailored share link" },
+              { to: "/dashboard/integrations", icon: Github, label: "Sync GitHub projects" },
               { to: "/dashboard/projects", icon: Plus, label: "Add a project" },
             ].map((action) => (
               <Link

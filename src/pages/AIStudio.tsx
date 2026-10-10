@@ -9,15 +9,25 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/convex/_generated/api";
-import { AI_NOTES, type AIMode } from "@/lib/linksphere";
+import {
+  AI_NOTES,
+  LOCALE_META,
+  TRANSLATABLE_LOCALES,
+  type AIMode,
+  type TranslatableLocale,
+} from "@/lib/linksphere";
+import { cn } from "@/lib/utils";
 import {
   CircleUserRound,
   Copy,
+  Languages,
   Loader2,
   MessageSquare,
+  Save,
   Send,
   Sparkles,
   Target,
+  Trash2,
 } from "lucide-react";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { useState } from "react";
@@ -485,6 +495,302 @@ function ProjectTab() {
   );
 }
 
+/* ------------------------------------------------------------------ */
+/* Multilingual profiles                                              */
+/* ------------------------------------------------------------------ */
+
+interface TranslationDraft {
+  headline: string;
+  bio: string;
+  goals: string;
+  education: string;
+  interests: string[];
+}
+
+function TranslationTab() {
+  const profile = useQuery(api.profiles.myProfile);
+  const saved = useQuery(api.translations.listMine);
+  const translateProfile = useAction(api.ai.translateProfile);
+  const saveTranslation = useMutation(api.translations.save);
+  const removeTranslation = useMutation(api.translations.remove);
+
+  const [locale, setLocale] = useState<TranslatableLocale>("te");
+  const [draft, setDraft] = useState<TranslationDraft | null>(null);
+  const [mode, setMode] = useState<AIMode | undefined>();
+  const [note, setNote] = useState<string | undefined>();
+  const [reviewed, setReviewed] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  if (!profile) return null;
+
+  const existing = (saved ?? []).find((item) => item.locale === locale) ?? null;
+
+  const selectLocale = (next: TranslatableLocale) => {
+    setLocale(next);
+    const row = (saved ?? []).find((item) => item.locale === next);
+    setDraft(
+      row
+        ? {
+            headline: row.headline ?? "",
+            bio: row.bio ?? "",
+            goals: row.goals ?? "",
+            education: row.education ?? "",
+            interests: row.interests,
+          }
+        : null,
+    );
+    setReviewed(row?.reviewed ?? false);
+    setMode(row?.mode);
+    setNote(undefined);
+  };
+
+  const handleGenerate = async () => {
+    setLoading(true);
+    try {
+      const result = await translateProfile({ locale });
+      if (result.ok) {
+        setDraft({
+          headline: result.fields.headline,
+          bio: result.fields.bio,
+          goals: result.fields.goals,
+          education: result.fields.education,
+          interests: result.fields.interests,
+        });
+        setMode(result.mode);
+        setNote(result.note);
+        // Review starts unchecked: nothing is published until you say so.
+        setReviewed(false);
+        toast.success(
+          result.mode === "live"
+            ? "Translation generated — review it before publishing"
+            : "No model available — nothing was translated",
+        );
+      } else {
+        toast.error(result.error);
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Translation failed.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!draft) return;
+    setSaving(true);
+    try {
+      await saveTranslation({ locale, ...draft, mode: mode ?? "demo", reviewed });
+      toast.success(
+        reviewed
+          ? `Saved and published in ${LOCALE_META[locale].label}`
+          : `Saved as a draft in ${LOCALE_META[locale].label}`,
+      );
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not save.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const set = <K extends keyof TranslationDraft>(
+    key: K,
+    value: TranslationDraft[K],
+  ) => setDraft((prev) => (prev ? { ...prev, [key]: value } : prev));
+
+  return (
+    <div className="grid gap-6">
+      <Panel
+        icon={Languages}
+        title="Multilingual profile"
+        description="Generate your profile in Telugu or Hindi, review it, then decide whether to publish it. Technical terms, project names and links are never translated."
+        actions={
+          <div className="flex items-center gap-2">
+            <AIModeBadge mode={mode} />
+            <Button size="sm" onClick={handleGenerate} disabled={loading}>
+              {loading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Sparkles className="size-4" />
+              )}
+              {loading
+                ? "Translating…"
+                : draft
+                  ? "Regenerate"
+                  : "Generate translation"}
+            </Button>
+          </div>
+        }
+      >
+        <div className="flex flex-wrap gap-2">
+          {TRANSLATABLE_LOCALES.map((code) => {
+            const row = (saved ?? []).find((item) => item.locale === code);
+            return (
+              <button
+                key={code}
+                type="button"
+                onClick={() => selectLocale(code)}
+                className={cn(
+                  "flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",
+                  locale === code
+                    ? "border-primary/50 bg-primary/10 text-primary"
+                    : "bg-muted/40 text-muted-foreground hover:bg-muted",
+                )}
+              >
+                {LOCALE_META[code].native}
+                <span className="text-[11px] text-muted-foreground">
+                  {row
+                    ? row.reviewed
+                      ? "published"
+                      : "draft"
+                    : "not added"}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-4 rounded-lg border bg-muted/30 p-3.5">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Original (English)
+          </p>
+          <ul className="mt-2 grid gap-1 text-xs text-muted-foreground">
+            <li>Headline: {profile.headline || "—"}</li>
+            <li className="line-clamp-2">Bio: {profile.bio || "—"}</li>
+            <li>Goals: {profile.goals || "—"}</li>
+            <li>Education: {profile.education || "—"}</li>
+          </ul>
+        </div>
+
+        {!draft && (
+          <p className="mt-4 rounded-lg border border-dashed bg-muted/30 px-3.5 py-3 text-xs leading-5 text-muted-foreground">
+            No {LOCALE_META[locale].label} version yet. Generate one, review
+            every field, then publish it when you are happy.
+          </p>
+        )}
+
+        {draft && (
+          <div className="mt-4 grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="tr-headline">Headline</Label>
+              <Input
+                id="tr-headline"
+                value={draft.headline}
+                onChange={(e) => set("headline", e.target.value)}
+                maxLength={160}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="tr-bio">Bio</Label>
+              <Textarea
+                id="tr-bio"
+                rows={5}
+                className="leading-6"
+                value={draft.bio}
+                onChange={(e) => set("bio", e.target.value)}
+                maxLength={2400}
+              />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-2">
+                <Label htmlFor="tr-goals">Goal</Label>
+                <Textarea
+                  id="tr-goals"
+                  rows={3}
+                  value={draft.goals}
+                  onChange={(e) => set("goals", e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="tr-education">Education</Label>
+                <Textarea
+                  id="tr-education"
+                  rows={3}
+                  value={draft.education}
+                  onChange={(e) => set("education", e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label>Interests</Label>
+              <TagInput
+                value={draft.interests}
+                onChange={(next) => set("interests", next)}
+              />
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border bg-muted/30 px-3.5 py-3">
+              <div>
+                <p className="text-sm font-medium">
+                  Reviewed — show on my public profile
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Unreviewed translations stay private in the dashboard.
+                </p>
+              </div>
+              <Switch checked={reviewed} onCheckedChange={setReviewed} />
+            </div>
+
+            <AIModeNote
+              mode={mode}
+              note={
+                note ??
+                (mode === "demo" ? AI_NOTES.translation : undefined)
+              }
+            />
+
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs text-muted-foreground">
+                {mode === "demo"
+                  ? "These fields still hold your original English text."
+                  : "Check names, numbers and links before publishing."}
+              </p>
+              <div className="flex items-center gap-2">
+                {existing && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-muted-foreground hover:text-destructive"
+                    onClick={async () => {
+                      try {
+                        await removeTranslation({ locale });
+                        setDraft(null);
+                        setReviewed(false);
+                        toast.success(
+                          `${LOCALE_META[locale].label} version removed`,
+                        );
+                      } catch (error) {
+                        toast.error(
+                          error instanceof Error
+                            ? error.message
+                            : "Could not remove.",
+                        );
+                      }
+                    }}
+                  >
+                    <Trash2 className="size-4" />
+                    Remove
+                  </Button>
+                )}
+                <Button size="sm" onClick={handleSave} disabled={saving}>
+                  {saving ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Save className="size-4" />
+                  )}
+                  {reviewed ? "Save & publish" : "Save draft"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </Panel>
+    </div>
+  );
+}
+
 export default function AIStudio() {
   const profile = useQuery(api.profiles.myProfile);
 
@@ -525,6 +831,10 @@ export default function AIStudio() {
             <Target className="size-4" />
             Project summaries
           </TabsTrigger>
+          <TabsTrigger value="languages">
+            <Languages className="size-4" />
+            Languages
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="twin">
@@ -535,6 +845,9 @@ export default function AIStudio() {
         </TabsContent>
         <TabsContent value="project">
           <ProjectTab />
+        </TabsContent>
+        <TabsContent value="languages">
+          <TranslationTab />
         </TabsContent>
       </Tabs>
     </div>

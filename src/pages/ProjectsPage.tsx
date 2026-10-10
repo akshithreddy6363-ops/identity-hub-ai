@@ -505,6 +505,18 @@ export default function ProjectsPage() {
                         Draft
                       </Badge>
                     )}
+                    {project.sourceProvider === "github" && (
+                      <Badge
+                        variant="outline"
+                        className="gap-1 text-[11px]"
+                        title="Imported from an external provider via Living Portfolio integrations."
+                      >
+                        <Github className="size-3" />
+                        {project.summary?.includes("Simulated sample data")
+                          ? "Simulated import"
+                          : "From GitHub"}
+                      </Badge>
+                    )}
                   </div>
                   {project.summary && (
                     <p className="mt-1.5 max-w-3xl text-sm leading-6 text-muted-foreground">
